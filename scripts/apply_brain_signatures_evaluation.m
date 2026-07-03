@@ -1,0 +1,363 @@
+clear; clc;
+basedir = '/Users/acalvet/Documents/MVPA_FISAX';
+save_results = fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '1_sig_evaluation');
+maskdir = fullfile(basedir, 'DATA', 'brainmask_canlab_bin_resampled.nii');
+
+contdirs = dir(fullfile(basedir, 'DATA', 'contrasts_brainmask'));
+subj_names = {contdirs([contdirs.isdir]).name};
+subj_names = subj_names(~ismember(subj_names, {'.', '..'}))';
+
+% contrast_files = {'con_0011_mask'; 'con_0012_mask'; 'con_0017_mask'; 'con_0018_mask'};
+% contrast_names = {'CSp', 'CSm', 'CSprev', 'CSmrev'};
+contrast_files = {'con_0011_mask'; 'con_0012_mask'};
+contrast_names = {'CSp', 'CSm'};
+
+metric = 'dot_product'; % dot_product cosine_similarity
+%% Load brain signatures
+% [our, ] = load_image_set({fullfile(save_results, 'signatures', 'svm_results_unthresholded.nii')});
+reddan = load_image_set('csplus');
+[suitas, ] = load_image_set({fullfile(save_results, 'signatures', '3_Liu_SUITAS_Induced20_z.nii')});
+zhou = fmri_data(which('VIFS.nii'));
+[wen, ] = load_image_set({fullfile(save_results, 'signatures', '1_Wen_cond_1block_predictive_map_raw.nii')});
+[nps, ] = load_image_set({fullfile(save_results, 'signatures', '6_Wager_NPS_Angels', 'weights_NSF_grouppred_cvpcr.img')});
+[ceko, ] = load_image_set('multiaversive');
+[craving, ] = load_image_set('ncs');
+
+signatures = {reddan, suitas, zhou, wen, nps, ceko, ceko, ceko, ceko, ceko, craving};
+sig_names = {'Reddan', 'suitas', 'zhou', 'wen', 'NPS', 'ceko_general', 'ceko_mechanical', ...
+    'ceko_thermal', 'ceko_sound', 'ceko_visual', 'craving'};
+pos = [1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 1];
+
+% Calculate pattern expression and save results
+cols = {};
+for i = 1:numel(sig_names)
+    for j = 1:numel(contrast_names)
+        cols{end+1} = sprintf('%s_%s', sig_names{i}, contrast_names{j});
+    end
+end
+
+res_pat_exp = array2table(zeros(length(subj_names), length(cols)), 'VariableNames', cols);
+res_pat_exp.Properties.RowNames = subj_names;
+
+for s = 1:length(signatures)
+    for c = 1:length(contrast_names)
+        path_img = fullfile(basedir, 'DATA', 'contrasts_brainmask', subj_names, 'REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL', [contrast_files{c} '.nii']);
+        data_obj = fmri_data(path_img, maskdir);
+
+        sig_resampled = resample_space(signatures{s}, data_obj);
+        res_pat_exp{:, [sig_names{s} '_' contrast_names{c}]} = canlab_pattern_similarity(data_obj.dat, sig_resampled.dat(:, pos(s)), metric);
+    end
+end
+
+% writetable(res_pat_exp, fullfile(save_results, 'pat_exp_all_signatures.xlsx'), 'WriteRowNames', true);
+
+%%
+load(fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai', 'training_data.mat'));
+load(fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai', 'test_data.mat'));
+pat_exp_our = readtable(fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai', 'pat_exp_all_data_xval_10fold.xlsx'), ReadRowNames = true);
+sig_names = {'VITCS', 'Reddan-Threat', 'Liu-SUITAS', 'Zhou-VIFS', 'Wen-BeyondThreat', 'Wager-NPS', 'Ceko-Common_NA', ...
+    'Ceko-Mechanical_NA', 'Ceko-Thermal_NA', 'Ceko-Sound_NA', 'Ceko-Visual_NA', 'Koban-NCS'};
+
+subj_tr = subj_names(tr_set);
+subj_ts = subj_names(ts_set);
+subj_all = subj_names;
+
+subj = subj_all;
+res_accuracy = array2table(zeros(length(sig_names), 6), 'VariableNames', {'acc', 'acc_p', 'acc_se', 'sens', 'spec','auc'});
+res_accuracy.Properties.RowNames = sig_names;
+res_forced_choice = array2table(zeros(length(subj), length(sig_names)), 'VariableNames', sig_names);
+res_forced_choice.Properties.RowNames = subj;
+
+rp = roc_plot([pat_exp_our{subj,1}; pat_exp_our{subj,2}], [ones(length(pat_exp_our{subj,1}),1); zeros(length(pat_exp_our{subj,2}),1)], 'threshold', 'pairedobservations');
+res_accuracy{sig_names{1}, 'acc'} = rp.accuracy;
+res_accuracy{sig_names{1}, 'acc_p'} = rp.accuracy_p;
+res_accuracy{sig_names{1}, 'acc_se'} = rp.accuracy_se;
+res_accuracy{sig_names{1}, 'sens'} = rp.sensitivity;
+res_accuracy{sig_names{1}, 'spec'} = rp.specificity;
+res_accuracy{sig_names{1}, 'auc'} = rp.AUC;
+res_forced_choice{:, sig_names{1}} = pat_exp_our{subj,1} > pat_exp_our{subj,2};
+
+j=2;
+for i = linspace(1, 21, 11)
+    res_forced_choice{:, sig_names{j}} = res_pat_exp{subj,i} > res_pat_exp{subj,i+1};
+    rp = roc_plot([res_pat_exp{subj,i}; res_pat_exp{subj,i+1}], [ones(length(res_pat_exp{subj,i}),1); zeros(length(res_pat_exp{subj,i+1}),1)], 'threshold', 'pairedobservations');
+    res_accuracy{sig_names{j}, 'acc'} = rp.accuracy;
+    res_accuracy{sig_names{j}, 'acc_p'} = rp.accuracy_p;
+    res_accuracy{sig_names{j}, 'acc_se'} = rp.accuracy_se;
+    res_accuracy{sig_names{j}, 'sens'} = rp.sensitivity;
+    res_accuracy{sig_names{j}, 'spec'} = rp.specificity;
+    res_accuracy{sig_names{j}, 'auc'} = rp.AUC;
+    j = j + 1;
+end
+
+res_accuracy_tr = res_accuracy;
+res_accuracy_ts = res_accuracy;
+res_accuracy_all = res_accuracy(2:end,:);
+res_accuracy_all2 = res_accuracy;
+% writetable(res_accuracy_all2, fullfile(save_results, 'accuracy_signatures_all_10fold.xlsx'), 'WriteRowNames', true);
+
+% writetable(res_forced_choice, fullfile(save_results, 'FC_signatures_tr.xlsx'), 'WriteRowNames', true);
+% writetable(res_forced_choice, fullfile(save_results, 'FC_signatures_ts.xlsx'), 'WriteRowNames', true);
+% writetable(res_forced_choice, fullfile(save_results, 'FC_signatures_all.xlsx'), 'WriteRowNames', true);
+
+% Calculate diferences
+p_mat = nan(width(res_forced_choice), width(res_forced_choice));
+n01_mat = nan(width(res_forced_choice), width(res_forced_choice));
+n10_mat = nan(width(res_forced_choice), width(res_forced_choice));
+for i = 1:width(res_forced_choice)
+    for j = i+1:width(res_forced_choice)
+        n01 = sum(~res_forced_choice{:,i} & res_forced_choice{:,j}); % A mal, B bien
+        n10 = sum(res_forced_choice{:,i} & ~res_forced_choice{:,j}); % A bien, B mal
+        p = binocdf(min(n01,n10), n01+n10, 0.5) * 2;
+
+        p_mat(i,j) = min(p,1);
+        n01_mat(j,i) = n01;
+        n10_mat(j,i) = n10;
+    end
+end
+dif_p_signatures_tr = array2table(p_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+dif_p_signatures_ts = array2table(p_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+dif_p_signatures_all = array2table(p_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+dif_n01_signatures_all = array2table(n01_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+dif_n10_signatures_all = array2table(n10_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+
+% Corregim per comparacions múltiples
+p_mat = table2array(dif_p_signatures_all);
+mask = triu(true(length(sig_names)),1);
+p_fdr = mafdr(p_mat(mask), 'BHFDR', true); % FDR (Benjamini-Hochberg)
+
+% Reconstrueix matriu
+p_mat_fdr = nan(length(sig_names));
+p_mat_fdr(mask) = p_fdr;
+dif_p_signatures_all_corr = array2table(p_mat_fdr, 'VariableNames', sig_names, 'RowNames', sig_names);
+
+% writetable(dif_p_signatures_tr, fullfile(save_results, 'dif_p_signatures_tr.xlsx'), 'WriteRowNames', true);
+% writetable(dif_p_signatures_ts, fullfile(save_results, 'dif_p_signatures_ts.xlsx'), 'WriteRowNames', true);
+% writetable(dif_p_signatures_all, fullfile(save_results, 'dif_p_signatures_all_10fold.xlsx'), 'WriteRowNames', true);
+% writetable(dif_p_signatures_tr_corr, fullfile(save_results, 'dif_p_signatures_tr_corr.xlsx'), 'WriteRowNames', true);
+% writetable(dif_p_signatures_ts_corr, fullfile(save_results, 'dif_p_signatures_ts_corr.xlsx'), 'WriteRowNames', true);
+% writetable(dif_p_signatures_all_corr, fullfile(save_results, 'dif_p_signatures_all_corr_10fold.xlsx'), 'WriteRowNames', true);
+% writetable(dif_n01_signatures_all, fullfile(save_results, 'dif_n01_signatures_all_corr_10fold.xlsx'), 'WriteRowNames', true);
+% writetable(dif_n10_signatures_all, fullfile(save_results, 'dif_n10_signatures_all_corr_10fold.xlsx'), 'WriteRowNames', true);
+
+
+% Plot --> BARPLOTS
+colors = [
+    0.23 0.43 0.68;   % VTCS
+    0.28 0.46 0.72;   % reddan
+    0.30 0.50 0.75;   % suitas
+    0.35 0.55 0.78;   % zhou
+    0.40 0.60 0.80;   % wen
+    0.29 0.62 0.64;   % NPS
+    0.35 0.65 0.45;   % ceko general
+    0.30 0.60 0.40;   % ceko mechanical
+    0.40 0.70 0.50;   % ceko thermal
+    0.45 0.72 0.55;   % ceko sound
+    0.38 0.68 0.48;   % ceko visual
+    0.80 0.45 0.55;   % craving
+];
+
+% TRAIN 
+figure('Position', [400 300 900 600]); hold on
+b = bar(res_accuracy_tr.acc, 'FaceColor', 'flat');
+b.CData = colors;
+er = errorbar(1:numel(res_accuracy_tr.acc), res_accuracy_tr.acc, res_accuracy_tr.acc_se, ...
+              'k', 'LineStyle', 'none', 'LineWidth', 1.5);
+xticks(1:numel(res_accuracy_tr.Properties.RowNames))
+xticklabels(strrep(res_accuracy_tr.Properties.RowNames, '_', ' '))
+xtickangle(45)
+title('Classification accuracy training set')
+ylabel('Classification accuracy')
+ylim([0.35 1])
+yline(0.5, '--', 'Chance', 'LineWidth', 1)
+set(gca, 'FontSize', 16, 'Box', 'off')
+for i = 1:height(res_accuracy_tr)
+    text(i, res_accuracy_tr.acc(i) + res_accuracy_tr.acc_se(i) + 0.02, ...
+        sprintf('%.2f', res_accuracy_tr.acc(i)), ...
+        'HorizontalAlignment', 'center', ...
+        'FontSize', 14)
+end
+dif_sig = [[1, 2]; [2, 3]; [2, 6]; [3, 4]; [4, 5]];
+for j = 1:length(dif_sig)
+    y_max = max(res_accuracy_tr.acc(dif_sig(j,:)) + res_accuracy_tr.acc_se(dif_sig(j,:)));
+    y_start = y_max + 0.04;
+    if j == 3, y_start = y_start + 0.03; end
+    % sig line
+    plot([dif_sig(j,1) dif_sig(j,2)], [y_start y_start], 'k', 'LineWidth', 1.5)
+    if j == 1 || j == 4
+        text(mean(dif_sig(j,:)), y_start + 0.005, '*', 'HorizontalAlignment', 'center', 'FontSize', 18)
+    else
+        text(mean(dif_sig(j,:)), y_start + 0.013, 'ns', 'HorizontalAlignment', 'center', 'FontSize', 13)
+    end
+end
+
+% TEST 
+figure('Position', [400 300 900 600]); hold on
+b = bar(res_accuracy_ts.acc, 'FaceColor', 'flat');
+b.CData = colors;
+er = errorbar(1:numel(res_accuracy_ts.acc), res_accuracy_ts.acc, res_accuracy_ts.acc_se, ...
+              'k', 'LineStyle', 'none', 'LineWidth', 1.5);
+xticks(1:numel(res_accuracy_ts.Properties.RowNames))
+xticklabels(strrep(res_accuracy_ts.Properties.RowNames, '_', ' '))
+xtickangle(45)
+title('Classification accuracy test set')
+ylabel('Classification accuracy')
+ylim([0.35 1.06])
+yline(0.5, '--', 'Chance', 'LineWidth', 1)
+set(gca, 'FontSize', 16, 'Box', 'off')
+for i = 1:height(res_accuracy_ts)
+    text(i, res_accuracy_ts.acc(i) + res_accuracy_ts.acc_se(i) + 0.02, ...
+        sprintf('%.2f', res_accuracy_ts.acc(i)), ...
+        'HorizontalAlignment', 'center', ...
+        'FontSize', 14)
+end
+dif_sig = [[1, 2]; [2, 3]; [2, 6]; [3, 4]; [4, 5]];
+for j = 1:length(dif_sig)
+    y_max = max(res_accuracy_ts.acc(dif_sig(j,:)) + res_accuracy_ts.acc_se(dif_sig(j,:)));
+    y_start = y_max + 0.04;
+    if j == 3, y_start = y_start + 0.03; end
+    % sig line
+    plot([dif_sig(j,1) dif_sig(j,2)], [y_start y_start], 'k', 'LineWidth', 1.5)
+    if j == 1
+        text(mean(dif_sig(j,:)), y_start + 0.005, '*', 'HorizontalAlignment', 'center', 'FontSize', 18)
+    else
+        text(mean(dif_sig(j,:)), y_start + 0.013, 'ns', 'HorizontalAlignment', 'center', 'FontSize', 13)
+    end
+end
+
+% ALL - without vitcs
+figure('Position', [400 300 900 600]); hold on
+b = bar(res_accuracy_all.acc, 'FaceColor', 'flat');
+b.CData = colors(2:end,:);
+er = errorbar(1:numel(res_accuracy_all.acc), res_accuracy_all.acc, res_accuracy_all.acc_se, ...
+              'k', 'LineStyle', 'none', 'LineWidth', 1.5);
+xticks(1:numel(res_accuracy_all.Properties.RowNames))
+xticklabels(strrep(res_accuracy_all.Properties.RowNames, '_', ' '))
+xtickangle(45)
+title('Classification accuracy across VITCS and previously published brain signatures')
+ylabel('Classification accuracy (%)')
+ylim([0.35 1])
+yline(0.5, '--', 'Chance', 'LineWidth', 1)
+set(gca, 'FontSize', 16, 'Box', 'off')
+for i = 1:height(res_accuracy_all)
+    text(i, res_accuracy_all.acc(i) + res_accuracy_all.acc_se(i) + 0.02, ...
+        sprintf('%.2f', res_accuracy_all.acc(i)), ...
+        'HorizontalAlignment', 'center', ...
+        'FontSize', 14)
+end
+
+% ALL 
+figure('Position', [400 300 1000 700]); hold on
+b = bar(res_accuracy_all2.acc, 'FaceColor', 'flat');
+b.CData = colors;
+er = errorbar(1:numel(res_accuracy_all2.acc), res_accuracy_all2.acc, res_accuracy_all2.acc_se, ...
+              'k', 'LineStyle', 'none', 'LineWidth', 1.5);
+xticks(1:numel(res_accuracy_all2.Properties.RowNames))
+xticklabels(strrep(res_accuracy_all2.Properties.RowNames, '_', ' '))
+xtickangle(45)
+% title('Classification accuracy across VITCS and previously published brain signatures')
+ylabel('Classification accuracy (%)')
+ylim([0.35 1])
+yline(0.5, '--', 'Chance', 'LineWidth', 1)
+set(gca, 'FontSize', 18, 'Box', 'off')
+for i = 1:height(res_accuracy_all2)
+    text(i, res_accuracy_all2.acc(i) + res_accuracy_all2.acc_se(i) + 0.02, ...
+        sprintf('%.2f', res_accuracy_all2.acc(i)), ...
+        'HorizontalAlignment', 'center', ...
+        'FontSize', 16)
+end
+dif_sig = [[1, 2]; [2, 3]; [2, 6]; [3, 4]; [4, 5]];
+for j = 1:length(dif_sig)
+    y_max = max(res_accuracy_all2.acc(dif_sig(j,:)) + res_accuracy_all2.acc_se(dif_sig(j,:)));
+    y_start = y_max + 0.04;
+    if j == 3, y_start = y_start + 0.03; end
+    % sig line
+    plot([dif_sig(j,1) dif_sig(j,2)], [y_start y_start], 'k', 'LineWidth', 1.5)
+    if j == 1
+        text(mean(dif_sig(j,:)), y_start + 0.005, '**', 'HorizontalAlignment', 'center', 'FontSize', 18)
+    else
+        text(mean(dif_sig(j,:)), y_start + 0.013, 'ns', 'HorizontalAlignment', 'center', 'FontSize', 13)
+    end
+end
+
+% res_accuracy_all2.acc = res_accuracy_all2.acc * 100;
+% res_accuracy_all2.acc_se = res_accuracy_all2.acc_se * 100;
+% ALL  --- more comparisons
+figure('Position', [400 300 1000 700]); hold on
+b = bar(res_accuracy_all2.acc, 'FaceColor', 'flat');
+b.CData = colors;
+er = errorbar(1:numel(res_accuracy_all2.acc), res_accuracy_all2.acc, res_accuracy_all2.acc_se, ...
+              'k', 'LineStyle', 'none', 'LineWidth', 1.5);
+xticks(1:numel(res_accuracy_all2.Properties.RowNames))
+xticklabels(strrep(res_accuracy_all2.Properties.RowNames, '_', ' '))
+xtickangle(45)
+% title('Classification accuracy across VITCS and previously published brain signatures')
+xlabel('VITCS and previously published affective brain signatures')
+set(gca, 'FontSize', 18, 'Box', 'off')
+ylabel('Classification accuracy (%)', 'FontSize', 20)
+ylim([35 100])
+yline(50, '--', 'Chance', 'LineWidth', 1)
+for i = 1:height(res_accuracy_all2)
+    text(i, res_accuracy_all2.acc(i) + res_accuracy_all2.acc_se(i) + 1.8, ...
+        sprintf('%.0f', res_accuracy_all2.acc(i)), ...
+        'HorizontalAlignment', 'center', ...
+        'FontSize', 16)
+end
+dif_sig = [[1, 2]; [2, 3]; [2, 4]; [2, 6]; [2, 7]; [3, 4]; [3, 5]; [3, 7]; [4, 5]; ...
+    [6, 7]; [7, 8]; [9, 10]; [11, 12]; [8,9]; [10,11]; [10,12]];
+for j = 1:length(dif_sig)
+    y_max = max(res_accuracy_all2.acc(dif_sig(j,:)) + res_accuracy_all2.acc_se(dif_sig(j,:)));
+    y_start = y_max + 3.8;
+    if j == 3 || j == 7 || j == 15 || j == 14, y_start = y_start + 2.8; end
+    if j == 4, y_start = y_start + 4.8; end
+    if j == 5 || j == 8 || j == 16, y_start = y_start + 8.8; end
+    % sig line
+    plot([dif_sig(j,1) dif_sig(j,2)], [y_start y_start], 'k', 'LineWidth', 1.5)
+    if j == 3 || j == 5 || j == 12 || j == 13
+        text(mean(dif_sig(j,:)), y_start + 0.3, '*', 'HorizontalAlignment', 'center', 'FontSize', 18)
+    elseif j == 1 || j == 7
+        text(mean(dif_sig(j,:)), y_start + 0.3, '***', 'HorizontalAlignment', 'center', 'FontSize', 18)
+    else
+        text(mean(dif_sig(j,:)), y_start + 0.9, 'ns', 'HorizontalAlignment', 'center', 'FontSize', 13)
+    end
+end
+
+
+
+% Plot --> Violin - SUITAS, Zhou i NPS
+
+contrast_name = {'NPS_CSp', 'NPS_CSm'};
+figure;
+barplot_columns_angels(res_pat_exp{:,contrast_name}, 'nofigure', 'colors', {[.4 .6 1], [1 1 0]}, ...
+    'names', contrast_name, 'dolines');
+xticklabels({'CS+', 'CS-'})
+set(gca, 'FontSize', 22)
+ylabel('Pattern expression');
+title('NPS')
+set(gcf,'position', [10, 10 , 800, 650])
+
+
+
+%% Correlation between pattern expressions
+vitcs_path = fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai');
+vitcs_pe = readtable(fullfile(vitcs_path, 'pat_exp_all_data_xval_10fold.xlsx'), 'ReadRowNames', true,'VariableNamingRule','preserve');
+
+r_res = array2table(zeros(length(sig_names), 3), 'VariableNames', {'CSp', 'CSm', 'CSp-CSm'});
+r_res.Properties.RowNames = sig_names;
+p_res = array2table(zeros(length(sig_names), 3), 'VariableNames', {'CSp', 'CSm', 'CSp-CSm'});
+p_res.Properties.RowNames = sig_names;
+
+for i = 1:length(sig_names)
+    [r_res{sig_names{i}, 'CSp'}, ~, p_res{sig_names{i}, 'CSp'}] = correlation('r', vitcs_pe.("CS+"), res_pat_exp.(sig_names{i} + "_CSp"));
+    [r_res{sig_names{i}, 'CSm'}, ~, p_res{sig_names{i}, 'CSm'}] = correlation('r', vitcs_pe.("CS-"), res_pat_exp.(sig_names{i} + "_CSm"));
+    [r_res{sig_names{i}, 'CSp-CSm'}, ~, p_res{sig_names{i}, 'CSp-CSm'}] = correlation('r', vitcs_pe.("CS+") - vitcs_pe.("CS-"), res_pat_exp.(sig_names{i} + "_CSp") - res_pat_exp.(sig_names{i} + "_CSm"));
+end
+
+R2_res = varfun(@(x) x.^2, r_res);
+
+pvec = p_res{:,:};      % 11x2 matriz
+qvec = mafdr(pvec(:), 'BHFDR', true);
+
+qvals = array2table(reshape(qvec, size(pvec)), ...
+    'VariableNames', p_res.Properties.VariableNames, ...
+    'RowNames', p_res.Properties.RowNames);
