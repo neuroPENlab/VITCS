@@ -98,7 +98,7 @@ CV_roc_inputs = load(roc_inputs_path);
 set_names = {'Training set (10-fold CV)', 'Test set - Acquisition', 'Test set - Reversal'};
 res_table = array2table(zeros(3, 11), 'VariableNames', {'accuracy', 'acc_se', 'acc_p', ...
     'sensitivity', 'sensitivity_ci_I', 'sensitivity_ci_S', 'specificity', ...
-    'specificity_ci_I', 'specificity_ci_S', 'AUC', 'CohensD'});
+    'specificity_ci_I', 'specificity_ci_S', 'AUC', 'cohens_d'});
 res_table.Properties.RowNames = set_names;
 
 % -- Training set (CV) --

@@ -25,9 +25,8 @@ basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
 savedir = fullfile(basedir, 'results', 'VITCS_development');   % <-- if necessary, EDIT THIS
 list_subj = {}; % <-- EDIT THIS, same as s01_train_test_split.m: list of subjects to include
 
-CSp_paths = '<PATHS_TO_CS+_CONTRAST_DATA>'; % <-- EDIT THIS: cell array with all CS+ contrast files
-CSm_paths = '<PATHS_TO_CS-_CONTRAST_DATA>'; % <-- EDIT THIS: cell array with all CS- contrast files
-maskdir = fullfile(datadir, 'brainmask.nii');
+CSp_paths = {'<PATHS_TO_CS+_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS+ contrast files
+CSm_paths = {'<PATHS_TO_CS-_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS- contrast files
 
 %% Bootstrap the VITCS model (using the training set)
 run_bootstrap_feature_stability(basedir, CSp_paths, CSm_paths, savedir)

@@ -1,3 +1,4 @@
+%% s07_mediation_analysis.m
 clear; clc;
 % Mediation analysis
 basedir = '/Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask'; 

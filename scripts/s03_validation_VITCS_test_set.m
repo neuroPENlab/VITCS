@@ -22,6 +22,6 @@ basedir = '/Users/acalvet/Repositories/neuroPENlab/VITCS';
 sigdir  = fullfile(basedir, 'results', 'VITCS_development');   % where 02_train_VITCS_signature.m wrote its outputs
 savedir = fullfile(basedir, 'results', 'VITCS_validation');   % <-- if necessary, EDIT THIS
 
-%% Evaluate VITCS models on the Test Set
+%% Evaluate VITCS model on the Test Set
 results  = run_test_set_validation(basedir, fullfile(sigdir, 'VITCS_unthresholded_10foldCV.nii'), ...
     fullfile(sigdir, 'VITCS_roc_inputs.mat'), savedir, 'VITCS');

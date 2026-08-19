@@ -26,8 +26,8 @@ datadir = fullfile(basedir, 'data');   % <-- if necessary, EDIT THIS
 savedir = fullfile(basedir, 'results', 'VITCS_development');   % <-- if necessary, EDIT THIS
 list_subj = {}; % <-- EDIT THIS, same as s01_train_test_split.m: list of subjects to include
 
-CSp_paths = '<PATHS_TO_CS+_CONTRAST_DATA>'; % <-- EDIT THIS: cell array with all CS+ contrast files
-CSm_paths = '<PATHS_TO_CS-_CONTRAST_DATA>'; % <-- EDIT THIS: cell array with all CS- contrast files
+CSp_paths = {'<PATHS_TO_CS+_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS+ contrast files
+CSm_paths = {'<PATHS_TO_CS-_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS- contrast files
 
 contrastdir = '/Users/acalvet/Documents/MVPA_FISAX/DATA/contrasts_brainmask';
 contdirs = dir(contrastdir);

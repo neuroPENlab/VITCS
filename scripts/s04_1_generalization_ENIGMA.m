@@ -50,7 +50,7 @@ signatures = {
     'VITCS_early', fmri_data(fullfile(basedir, 'results', 'VITCS_development_early', 'VITCS_unthresholded_10foldCV.nii'), maskdir)
     'VITCS_late',  fmri_data(fullfile(basedir, 'results', 'VITCS_development_late',  'VITCS_unthresholded_10foldCV.nii'), maskdir)
     'Reddan_Threat', load_image_set('csplus')
-    'Liu_SUITAS',  fmri_data('<PATH_SUITAS_SIGNATURE>', maskdir) % <-- EDIT THIS
+    'Liu_SUITAS',  fmri_data('<PATH_TO_SUITAS_SIGNATURE>', maskdir) % <-- EDIT THIS
 };
 
 %% Calculate pattern expression for all signatures

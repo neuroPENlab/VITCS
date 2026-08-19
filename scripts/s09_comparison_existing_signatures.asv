@@ -1,32 +1,42 @@
+%% s09_comparison_existing_signatures.m
 clear; clc;
-basedir = '/Users/acalvet/Documents/MVPA_FISAX';
-save_results = fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '1_sig_evaluation');
-maskdir = fullfile(basedir, 'DATA', 'brainmask_canlab_bin_resampled.nii');
+
+%% User-defined paths (TO EDIT)
+basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
+basedir = '/Users/acalvet/Repositories/neuroPENlab/VITCS';
+savedir = fullfile(basedir, 'results', 'comparison_existing_signatures');   % <-- if necessary, EDIT THIS
+if ~exist(savedir, 'dir'); mkdir(savedir); end
+
+maskdir = fullfile(datadir, 'brainmask.nii');
+metric = 'dot_product';
 
 contdirs = dir(fullfile(basedir, 'DATA', 'contrasts_brainmask'));
 subj_names = {contdirs([contdirs.isdir]).name};
 subj_names = subj_names(~ismember(subj_names, {'.', '..'}))';
 
-% contrast_files = {'con_0011_mask'; 'con_0012_mask'; 'con_0017_mask'; 'con_0018_mask'};
-% contrast_names = {'CSp', 'CSm', 'CSprev', 'CSmrev'};
-contrast_files = {'con_0011_mask'; 'con_0012_mask'};
+CSp_paths = {'<PATHS_TO_CS+_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS+ contrast files
+CSm_paths = {'<PATHS_TO_CS-_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS- contrast files
+contrast_files = {CSp_paths, CSm_paths};
 contrast_names = {'CSp', 'CSm'};
 
-metric = 'dot_product'; % dot_product cosine_similarity
 %% Load brain signatures
-% [our, ] = load_image_set({fullfile(save_results, 'signatures', 'svm_results_unthresholded.nii')});
-reddan = load_image_set('csplus');
-[suitas, ] = load_image_set({fullfile(save_results, 'signatures', '3_Liu_SUITAS_Induced20_z.nii')});
-zhou = fmri_data(which('VIFS.nii'));
-[wen, ] = load_image_set({fullfile(save_results, 'signatures', '1_Wen_cond_1block_predictive_map_raw.nii')});
-[nps, ] = load_image_set({fullfile(save_results, 'signatures', '6_Wager_NPS_Angels', 'weights_NSF_grouppred_cvpcr.img')});
-[ceko, ] = load_image_set('multiaversive');
-[craving, ] = load_image_set('ncs');
-
-signatures = {reddan, suitas, zhou, wen, nps, ceko, ceko, ceko, ceko, ceko, craving};
-sig_names = {'Reddan', 'suitas', 'zhou', 'wen', 'NPS', 'ceko_general', 'ceko_mechanical', ...
-    'ceko_thermal', 'ceko_sound', 'ceko_visual', 'craving'};
-pos = [1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 1];
+% Each entry: {display name, fmri_data object, position of selected signature}. 
+% Adding a new signature to compare against ENIGMA data only requires adding a 
+% row here - the pattern expression loop below is identical for all of them.
+multiaversive = load_image_set('multiaversive');
+signatures = {
+    'Reddan-Threat', load_image_set('csplus'), 1
+    'Liu-SUITAS', load_image_set({'<PATH_TO_Liu-SUITAS_SIGNATURE>'}), 1
+    'Zhou-VIFS', fmri_data(which('VIFS.nii')), 1
+    'Wen-BeyondThreat', load_image_set({'<PATH_TO_WEN-BeyondThreat_SIGNATURE>'}), 1
+    'Wager-NPS', load_image_set({'<PATH_TO_Wager-NPS_SIGNATURE>'}), 1
+    'Ceko-Common_NA', multiaversive, 1
+    'Ceko-Mechanical_NA', multiaversive, 2
+    'Ceko-Thermal_NA', multiaversive, 3
+    'Ceko-Sound_NA', multiaversive, 4
+    'Ceko-Visual_NA', multiaversive, 5
+    'Koban-NCS', load_image_set('ncs'), 1
+};
 
 % Calculate pattern expression and save results
 cols = {};
@@ -39,13 +49,20 @@ end
 res_pat_exp = array2table(zeros(length(subj_names), length(cols)), 'VariableNames', cols);
 res_pat_exp.Properties.RowNames = subj_names;
 
-for s = 1:length(signatures)
+for s = 1:size(signatures,1)
     for c = 1:length(contrast_names)
-        path_img = fullfile(basedir, 'DATA', 'contrasts_brainmask', subj_names, 'REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL', [contrast_files{c} '.nii']);
-        data_obj = fmri_data(path_img, maskdir);
+        data_obj = fmri_data(contrast_files{c}, maskdir);
 
-        sig_resampled = resample_space(signatures{s}, data_obj);
-        res_pat_exp{:, [sig_names{s} '_' contrast_names{c}]} = canlab_pattern_similarity(data_obj.dat, sig_resampled.dat(:, pos(s)), metric);
+        sig_resampled = resample_space(signatures{s,2}, data_obj);
+        res_pat_exp{:, [sig_names{s} '_' contrast_names{c}]} = canlab_pattern_similarity(data_obj.dat, sig_resampled.dat(:, signatures{s,3}), metric);
+    end
+end
+
+for c = 1:length(contrast_names)
+        data_obj = fmri_data(contrast_files{c}, maskdir);
+
+        sig_resampled = resample_space(signatures{s,2}, data_obj);
+        res_pat_exp{:, [sig_names{s} '_' contrast_names{c}]} = canlab_pattern_similarity(data_obj.dat, sig_resampled.dat(:, signatures{s,3}), metric);
     end
 end
 

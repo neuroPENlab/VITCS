@@ -1,0 +1,218 @@
+%% s09_comparison_existing_signatures.m
+clear; clc;
+
+%% User-defined paths (TO EDIT)
+basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
+basedir = '/Users/acalvet/Repositories/neuroPENlab/VITCS';
+savedir = fullfile(basedir, 'results', 'comparison_existing_signatures');   % <-- if necessary, EDIT THIS
+if ~exist(savedir, 'dir'); mkdir(savedir); end
+
+maskdir = fullfile(datadir, 'brainmask.nii');
+metric = 'dot_product';
+
+contdirs = dir(fullfile(basedir, 'DATA', 'contrasts_brainmask'));
+subj_names = {contdirs([contdirs.isdir]).name};
+subj_names = subj_names(~ismember(subj_names, {'.', '..'}))';
+
+CSp_paths = {'<PATHS_TO_CS+_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS+ contrast files
+CSm_paths = {'<PATHS_TO_CS-_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS- contrast files
+contrast_files = {CSp_paths, CSm_paths};
+contrast_names = {'CSp', 'CSm'};
+
+%% Load brain signatures
+% Each entry: {display name, fmri_data object, position of selected signature}. 
+% Adding a new signature to compare against ENIGMA data only requires adding a 
+% row here - the pattern expression loop below is identical for all of them.
+multiaversive = load_image_set('multiaversive');
+signatures = {
+    'Reddan-Threat', load_image_set('csplus'), 1
+    'Liu-SUITAS', load_image_set({'<PATH_TO_Liu-SUITAS_SIGNATURE>'}), 1
+    'Zhou-VIFS', fmri_data(which('VIFS.nii')), 1
+    'Wen-BeyondThreat', load_image_set({'<PATH_TO_WEN-BeyondThreat_SIGNATURE>'}), 1
+    'Wager-NPS', load_image_set({'<PATH_TO_Wager-NPS_SIGNATURE>'}), 1
+    'Ceko-Common_NA', multiaversive, 1
+    'Ceko-Mechanical_NA', multiaversive, 2
+    'Ceko-Thermal_NA', multiaversive, 3
+    'Ceko-Sound_NA', multiaversive, 4
+    'Ceko-Visual_NA', multiaversive, 5
+    'Koban-NCS', load_image_set('ncs'), 1
+};
+
+% Calculate pattern expression and save results
+cols = {};
+for i = 1:numel(sig_names)
+    for j = 1:numel(contrast_names)
+        cols{end+1} = sprintf('%s_%s', sig_names{i}, contrast_names{j});
+    end
+end
+
+res_pat_exp = array2table(zeros(length(subj_names), length(cols)), 'VariableNames', cols);
+res_pat_exp.Properties.RowNames = subj_names;
+
+for c = 1:length(contrast_names)
+        data_obj = fmri_data(contrast_files{c}, maskdir);
+    for s = 1:size(signatures,1)
+        if ~(startsWith(signatures{s,1}, 'Ceko-') && ~contains(signatures{s,1}, 'Common'))
+            sig_resampled = resample_space(signatures{s,2}, data_obj);
+        end
+        res_pat_exp{:, [signatures{s,1} '_' contrast_names{c}]} = canlab_pattern_similarity(data_obj.dat, sig_resampled.dat(:, signatures{s,3}), metric);
+    end
+end
+
+writetable(res_pat_exp, fullfile(save_results, 'pat_exp_existing_signatures.xlsx'), 'WriteRowNames', true);
+
+%%
+load(fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai', 'training_data.mat'));
+load(fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai', 'test_data.mat'));
+pat_exp_our = readtable(fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai', 'pat_exp_all_data_xval_10fold.xlsx'), ReadRowNames = true);
+sig_names = {'VITCS', 'Reddan-Threat', 'Liu-SUITAS', 'Zhou-VIFS', 'Wen-BeyondThreat', 'Wager-NPS', 'Ceko-Common_NA', ...
+    'Ceko-Mechanical_NA', 'Ceko-Thermal_NA', 'Ceko-Sound_NA', 'Ceko-Visual_NA', 'Koban-NCS'};
+
+subj_all = subj_names;
+
+subj = subj_all;
+res_accuracy = array2table(zeros(length(sig_names), 6), 'VariableNames', {'acc', 'acc_p', 'acc_se', 'sens', 'spec','auc'});
+res_accuracy.Properties.RowNames = sig_names;
+res_forced_choice = array2table(zeros(length(subj), length(sig_names)), 'VariableNames', sig_names);
+res_forced_choice.Properties.RowNames = subj;
+
+rp = roc_plot([pat_exp_our{subj,1}; pat_exp_our{subj,2}], [ones(length(pat_exp_our{subj,1}),1); zeros(length(pat_exp_our{subj,2}),1)], 'threshold', 'pairedobservations');
+res_accuracy{sig_names{1}, 'acc'} = rp.accuracy;
+res_accuracy{sig_names{1}, 'acc_p'} = rp.accuracy_p;
+res_accuracy{sig_names{1}, 'acc_se'} = rp.accuracy_se;
+res_accuracy{sig_names{1}, 'sens'} = rp.sensitivity;
+res_accuracy{sig_names{1}, 'spec'} = rp.specificity;
+res_accuracy{sig_names{1}, 'auc'} = rp.AUC;
+res_forced_choice{:, sig_names{1}} = pat_exp_our{subj,1} > pat_exp_our{subj,2};
+
+j=2;
+for i = linspace(1, 21, 11)
+    res_forced_choice{:, sig_names{j}} = res_pat_exp{subj,i} > res_pat_exp{subj,i+1};
+    rp = roc_plot([res_pat_exp{subj,i}; res_pat_exp{subj,i+1}], [ones(length(res_pat_exp{subj,i}),1); zeros(length(res_pat_exp{subj,i+1}),1)], 'threshold', 'pairedobservations');
+    res_accuracy{sig_names{j}, 'acc'} = rp.accuracy;
+    res_accuracy{sig_names{j}, 'acc_p'} = rp.accuracy_p;
+    res_accuracy{sig_names{j}, 'acc_se'} = rp.accuracy_se;
+    res_accuracy{sig_names{j}, 'sens'} = rp.sensitivity;
+    res_accuracy{sig_names{j}, 'spec'} = rp.specificity;
+    res_accuracy{sig_names{j}, 'auc'} = rp.AUC;
+    j = j + 1;
+end
+
+res_accuracy_all2 = res_accuracy;
+% writetable(res_accuracy_all2, fullfile(save_results, 'accuracy_signatures_all_10fold.xlsx'), 'WriteRowNames', true);
+
+% Calculate diferences
+p_mat = nan(width(res_forced_choice), width(res_forced_choice));
+n01_mat = nan(width(res_forced_choice), width(res_forced_choice));
+n10_mat = nan(width(res_forced_choice), width(res_forced_choice));
+for i = 1:width(res_forced_choice)
+    for j = i+1:width(res_forced_choice)
+        n01 = sum(~res_forced_choice{:,i} & res_forced_choice{:,j}); % A mal, B bien
+        n10 = sum(res_forced_choice{:,i} & ~res_forced_choice{:,j}); % A bien, B mal
+        p = binocdf(min(n01,n10), n01+n10, 0.5) * 2;
+
+        p_mat(i,j) = min(p,1);
+        n01_mat(j,i) = n01;
+        n10_mat(j,i) = n10;
+    end
+end
+dif_p_signatures_all = array2table(p_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+dif_n01_signatures_all = array2table(n01_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+dif_n10_signatures_all = array2table(n10_mat, 'VariableNames', sig_names, 'RowNames', sig_names);
+
+% Corregim per comparacions múltiples
+p_mat = table2array(dif_p_signatures_all);
+mask = triu(true(length(sig_names)),1);
+p_fdr = mafdr(p_mat(mask), 'BHFDR', true); % FDR (Benjamini-Hochberg)
+
+% Reconstrueix matriu
+p_mat_fdr = nan(length(sig_names));
+p_mat_fdr(mask) = p_fdr;
+dif_p_signatures_all_corr = array2table(p_mat_fdr, 'VariableNames', sig_names, 'RowNames', sig_names);
+
+% writetable(dif_p_signatures_all, fullfile(save_results, 'dif_p_signatures_all_10fold.xlsx'), 'WriteRowNames', true);
+% writetable(dif_p_signatures_all_corr, fullfile(save_results, 'dif_p_signatures_all_corr_10fold.xlsx'), 'WriteRowNames', true);
+% writetable(dif_n01_signatures_all, fullfile(save_results, 'dif_n01_signatures_all_corr_10fold.xlsx'), 'WriteRowNames', true);
+% writetable(dif_n10_signatures_all, fullfile(save_results, 'dif_n10_signatures_all_corr_10fold.xlsx'), 'WriteRowNames', true);
+
+% Plot --> BARPLOTS
+colors = [
+    0.23 0.43 0.68;   % VTCS
+    0.28 0.46 0.72;   % reddan
+    0.30 0.50 0.75;   % suitas
+    0.35 0.55 0.78;   % zhou
+    0.40 0.60 0.80;   % wen
+    0.29 0.62 0.64;   % NPS
+    0.35 0.65 0.45;   % ceko general
+    0.30 0.60 0.40;   % ceko mechanical
+    0.40 0.70 0.50;   % ceko thermal
+    0.45 0.72 0.55;   % ceko sound
+    0.38 0.68 0.48;   % ceko visual
+    0.80 0.45 0.55;   % craving
+];
+
+% res_accuracy_all2.acc = res_accuracy_all2.acc * 100;
+% res_accuracy_all2.acc_se = res_accuracy_all2.acc_se * 100;
+% ALL  --- more comparisons
+figure('Position', [400 300 1000 700]); hold on
+b = bar(res_accuracy_all2.acc, 'FaceColor', 'flat');
+b.CData = colors;
+er = errorbar(1:numel(res_accuracy_all2.acc), res_accuracy_all2.acc, res_accuracy_all2.acc_se, ...
+              'k', 'LineStyle', 'none', 'LineWidth', 1.5);
+xticks(1:numel(res_accuracy_all2.Properties.RowNames))
+xticklabels(strrep(res_accuracy_all2.Properties.RowNames, '_', ' '))
+xtickangle(45)
+% title('Classification accuracy across VITCS and previously published brain signatures')
+xlabel('VITCS and previously published affective brain signatures')
+set(gca, 'FontSize', 18, 'Box', 'off')
+ylabel('Classification accuracy (%)', 'FontSize', 20)
+ylim([35 100])
+yline(50, '--', 'Chance', 'LineWidth', 1)
+for i = 1:height(res_accuracy_all2)
+    text(i, res_accuracy_all2.acc(i) + res_accuracy_all2.acc_se(i) + 1.8, ...
+        sprintf('%.0f', res_accuracy_all2.acc(i)), ...
+        'HorizontalAlignment', 'center', ...
+        'FontSize', 16)
+end
+dif_sig = [[1, 2]; [2, 3]; [2, 4]; [2, 6]; [2, 7]; [3, 4]; [3, 5]; [3, 7]; [4, 5]; ...
+    [6, 7]; [7, 8]; [9, 10]; [11, 12]; [8,9]; [10,11]; [10,12]];
+for j = 1:length(dif_sig)
+    y_max = max(res_accuracy_all2.acc(dif_sig(j,:)) + res_accuracy_all2.acc_se(dif_sig(j,:)));
+    y_start = y_max + 3.8;
+    if j == 3 || j == 7 || j == 15 || j == 14, y_start = y_start + 2.8; end
+    if j == 4, y_start = y_start + 4.8; end
+    if j == 5 || j == 8 || j == 16, y_start = y_start + 8.8; end
+    % sig line
+    plot([dif_sig(j,1) dif_sig(j,2)], [y_start y_start], 'k', 'LineWidth', 1.5)
+    if j == 3 || j == 5 || j == 12 || j == 13
+        text(mean(dif_sig(j,:)), y_start + 0.3, '*', 'HorizontalAlignment', 'center', 'FontSize', 18)
+    elseif j == 1 || j == 7
+        text(mean(dif_sig(j,:)), y_start + 0.3, '***', 'HorizontalAlignment', 'center', 'FontSize', 18)
+    else
+        text(mean(dif_sig(j,:)), y_start + 0.9, 'ns', 'HorizontalAlignment', 'center', 'FontSize', 13)
+    end
+end
+
+%% Correlation between pattern expressions
+vitcs_path = fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai');
+vitcs_pe = readtable(fullfile(vitcs_path, 'pat_exp_all_data_xval_10fold.xlsx'), 'ReadRowNames', true,'VariableNamingRule','preserve');
+
+r_res = array2table(zeros(length(sig_names), 3), 'VariableNames', {'CSp', 'CSm', 'CSp-CSm'});
+r_res.Properties.RowNames = sig_names;
+p_res = array2table(zeros(length(sig_names), 3), 'VariableNames', {'CSp', 'CSm', 'CSp-CSm'});
+p_res.Properties.RowNames = sig_names;
+
+for i = 1:length(sig_names)
+    [r_res{sig_names{i}, 'CSp'}, ~, p_res{sig_names{i}, 'CSp'}] = correlation('r', vitcs_pe.("CS+"), res_pat_exp.(sig_names{i} + "_CSp"));
+    [r_res{sig_names{i}, 'CSm'}, ~, p_res{sig_names{i}, 'CSm'}] = correlation('r', vitcs_pe.("CS-"), res_pat_exp.(sig_names{i} + "_CSm"));
+    [r_res{sig_names{i}, 'CSp-CSm'}, ~, p_res{sig_names{i}, 'CSp-CSm'}] = correlation('r', vitcs_pe.("CS+") - vitcs_pe.("CS-"), res_pat_exp.(sig_names{i} + "_CSp") - res_pat_exp.(sig_names{i} + "_CSm"));
+end
+
+R2_res = varfun(@(x) x.^2, r_res);
+
+pvec = p_res{:,:};      % 11x2 matriz
+qvec = mafdr(pvec(:), 'BHFDR', true);
+
+qvals = array2table(reshape(qvec, size(pvec)), ...
+    'VariableNames', p_res.Properties.VariableNames, ...
+    'RowNames', p_res.Properties.RowNames);
