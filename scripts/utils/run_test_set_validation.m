@@ -102,7 +102,8 @@ res_table = array2table(zeros(3, 11), 'VariableNames', {'accuracy', 'acc_se', 'a
 res_table.Properties.RowNames = set_names;
 
 % -- Training set (CV) --
-dif_xval_dist = CV_roc_inputs.xval_dist_C1(1:138) - CV_roc_inputs.xval_dist_C1(139:end);
+dif_xval_dist = CV_roc_inputs.xval_dist_C1(CV_roc_inputs.outcome_C1 ...
+    ) - CV_roc_inputs.xval_dist_C1(~CV_roc_inputs.outcome_C1) ;
 d_cv = mean(dif_xval_dist)/std(dif_xval_dist); % Cohen's D
 
 rp = roc_plot(CV_roc_inputs.xval_dist_C1, CV_roc_inputs.outcome_C1, 'threshold', 'pairedobservations');

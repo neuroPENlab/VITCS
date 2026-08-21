@@ -40,9 +40,9 @@ signatures = {
 
 % Calculate pattern expression and save results
 cols = {};
-for i = 1:numel(sig_names)
+for i = 1:size(signatures,1)
     for j = 1:numel(contrast_names)
-        cols{end+1} = sprintf('%s_%s', sig_names{i}, contrast_names{j});
+        cols{end+1} = sprintf('%s_%s', signatures{s,1}, contrast_names{j});
     end
 end
 
@@ -197,15 +197,14 @@ end
 vitcs_path = fullfile(basedir, 'TFM_git', 'results', 'final_brainmask', '2_SVM_results_stai');
 vitcs_pe = readtable(fullfile(vitcs_path, 'pat_exp_all_data_xval_10fold.xlsx'), 'ReadRowNames', true,'VariableNamingRule','preserve');
 
-r_res = array2table(zeros(length(sig_names), 3), 'VariableNames', {'CSp', 'CSm', 'CSp-CSm'});
+r_res = array2table(zeros(length(sig_names), 2), 'VariableNames', {'CSp', 'CSm'});
 r_res.Properties.RowNames = sig_names;
-p_res = array2table(zeros(length(sig_names), 3), 'VariableNames', {'CSp', 'CSm', 'CSp-CSm'});
+p_res = array2table(zeros(length(sig_names), 2), 'VariableNames', {'CSp', 'CSm'});
 p_res.Properties.RowNames = sig_names;
 
 for i = 1:length(sig_names)
     [r_res{sig_names{i}, 'CSp'}, ~, p_res{sig_names{i}, 'CSp'}] = correlation('r', vitcs_pe.("CS+"), res_pat_exp.(sig_names{i} + "_CSp"));
     [r_res{sig_names{i}, 'CSm'}, ~, p_res{sig_names{i}, 'CSm'}] = correlation('r', vitcs_pe.("CS-"), res_pat_exp.(sig_names{i} + "_CSm"));
-    [r_res{sig_names{i}, 'CSp-CSm'}, ~, p_res{sig_names{i}, 'CSp-CSm'}] = correlation('r', vitcs_pe.("CS+") - vitcs_pe.("CS-"), res_pat_exp.(sig_names{i} + "_CSp") - res_pat_exp.(sig_names{i} + "_CSm"));
 end
 
 R2_res = varfun(@(x) x.^2, r_res);

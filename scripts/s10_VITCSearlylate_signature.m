@@ -43,6 +43,13 @@ res_VITCSearly  = run_test_set_validation(basedir, fullfile(savedir_early, 'VITC
 res_VITCSlate  = run_test_set_validation(basedir, fullfile(savedir_late, 'VITCS_unthresholded_10foldCV.nii'), ...
     fullfile(savedir_late, 'VITCS_roc_inputs.mat'), savedir_late, 'VITCS-late');
 
+%% VITCS-early and VITCS-late pattern expression for CS+ and CS- across the full sample 
+run_full_sample_pattern_expression(basedir, {'con_0011_mask', 'con_0012_mask'}, ...
+    {'CS+', 'CS-'}, savedir_early, savedir_early)
+
+run_full_sample_pattern_expression(basedir, {'con_0011_mask', 'con_0012_mask'}, ...
+    {'CS+', 'CS-'}, savedir_late, savedir_late)
+
 %% Bootstrap the VITCS-early and VITCS-late models (using the training set)
 run_bootstrap_feature_stability(basedir, CSp_early_paths, CSm_early_paths, savedir_early)
 

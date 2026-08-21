@@ -1,214 +1,129 @@
-%% s07_mediation_analysis.m
+%% 07_mediation_analysis.m
+% -------------------------------------------------------------------
+% Test whether skin conductance responses (SCRs) mediate the
+% association between VITCS expression during threat acquisition and
+% participants' subjective ratings (arousal and valence, separate
+% models).
+%
+% From Methods: "First, we established a positive association between
+% the independent variable (X; VITCS brain response during the CS+
+% trials for each participant) and the dependent variable (Y; perceived
+% arousal or valence). Once these neural-subjective associations were
+% confirmed (significant path c), we examined whether they were
+% mediated by SCRs [...] (mediator M) [...]. Statistical significance
+% of the mediation effect and each individual path (a, b, and a*b) was
+% assessed using a bias-corrected and accelerated bootstrap procedure
+% [...] randomly sampling with replacement 10,000 observations."
+%
+% From Results: path c (total effect) is reported on the full available
+% sample (N = 172, participants with both VITCS pattern expression and
+% subjective ratings). Paths a, b, c', and the indirect effect (a*b)
+% are reported on the smaller subsample with usable SCR data (n = 165;
+% 7 participants excluded from SCR analyses due to recording
+% artifacts - see Methods, "Skin conductance responses").
+%
+% IMPORTANT: path c is computed via a direct regression of Y on X on
+% the full N=172 sample. Path c doesn't mathematically depend on M 
+% (so the reported number was unaffected), so path c is computed 
+% independently and directly instead.
+%
+% Dependencies: CANlab Mediation Toolbox (mediation.m)
+% -------------------------------------------------------------------
 clear; clc;
-% Mediation analysis
-basedir = '/Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask'; 
-% pat_exp = readtable(fullfile(basedir, '3_sig_evaluation_test/results_new_CS+CS-diff/all_pat_exp_new.xlsx'), 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
-% pat_exp = readtable(fullfile(basedir, '2_SVM_results_stai_neurosynth/VALIDATION/_Pattern_expression_allsample.xlsx'), 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
-% pat_exp = readtable(fullfile(basedir, '2_SVM_results_stai/pat_exp_all_data_xval.xlsx'), 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
-pat_exp = readtable(fullfile(basedir, '2_SVM_results_stai/pat_exp_all_data_xval_10fold.xlsx'), 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
-% pat_exp = readtable(fullfile(basedir, '1_sig_evaluation/pat_exp_suitas.xlsx'), 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
-skin = readtable(fullfile(basedir, 'SKIN_ARO_VAL', 'SCR_detrend.xlsx'), 'ReadRowNames', true);
-subj_rat = readtable(fullfile(basedir, 'SKIN_ARO_VAL', 'Subjective_ratings_condrev.xlsx'), 'ReadRowNames', true);
 
-pat_exp.Properties.RowNames = erase(pat_exp.Properties.RowNames, "sub-");
-pat_exp.Properties.VariableNames = strcat("VITS_", pat_exp.Properties.VariableNames);
-cols_to_keep1 = {'VITS_CS+', 'VITS_CS-', 'VITS_CS+early', 'VITS_CS+late', 'VITS_CS-early', 'VITS_CS-late', ...
-    'VITS_CS+rev', 'VITS_CS-rev', 'VITS_CS+revearly', 'VITS_CS+revlate', 'VITS_CS-revearly', 'VITS_CS-revlate'};
-% cols_to_keep1 = {'suitas_CS+', 'suitas_CS-', 'suitas_CS+early', 'suitas_CS+late', 'suitas_CS-early', 'suitas_CS-late', ...
-%     'suitas_CS+rev', 'suitas_CS-rev', 'suitas_CS+revearly', 'suitas_CS+revlate', 'suitas_CS-revearly', 'suitas_CS-revlate'};
-% cols_to_keep1 = {'reddan_CS+', 'reddan_CS-', 'reddan_CS+early', 'reddan_CS+late', 'reddan_CS-early', 'reddan_CS-late', ...
-%     'reddan_CS+rev', 'reddan_CS-rev', 'reddan_CS+revearly', 'reddan_CS+revlate', 'reddan_CS-revearly', 'reddan_CS-revlate'};
-pat_exp_sub = pat_exp(:, cols_to_keep1);
+%% User-defined paths (TO EDIT)
+basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as previous scripts
+basedir = '/Users/acalvet/Repositories/neuroPENlab/VITCS';
 
-cols_to_keep2 = {'Cond_CSplus_mean', 'Cond_Csminus_mean', 'Cond_CSplus_mean_early', 'Cond_CSplus_mean_late', 'Cond_Csminus_mean_early', 'Cond_Csminus_mean_late', ...
-    'REV_New_CSplus_mean', 'REV_New_CSminus_mean', 'REV_New_CSplus_mean_early', 'REV_New_CSplus_mean_late', 'REV_New_CSminus_mean_early', 'REV_New_CSminus_mean_late'};
-skin_sub = skin(:, cols_to_keep2);
-skin_sub.Properties.VariableNames = cols_to_keep1;
+scr_path = '<PATH_TO_SCR_DATA>';               % <-- EDIT THIS: SCR_detrend.xlsx equivalent
+subj_rat_path = '<PATH_TO_SUBJECTIVE_RATINGS_DATA>'; % <-- EDIT THIS: Subjective_ratings_condrev.xlsx equivalent
 
-cols_to_keep3 = {'COND_CSplus_VAL', 'COND_CSplus_ARO', 'COND_CSminus_VAL', 'COND_Csminus_ARO', ...
-    'REV_New_Csplus_VAL', 'REV_New_CSplus_ARO', 'REV_New_CSminus_VAL', 'REV_New_CSminus_ARO'};
-subj_rat_sub = subj_rat(:, cols_to_keep3);
+%% Define signatures in which apply mediation analysis
+signatures = {
+    'VITCS', fullfile(basedir, 'results', 'VITCS_development', 'pat_exp_test_set_VITCS.xlsx'), ...
+    fullfile(basedir, 'results', 'VITCS_mediation') % CANVIAR
+    'Reddan-Threat', load_image_set('csplus'), ...
+    fullfile(basedir, 'results', 'comparison_existing_signatures') % CANVIAR
+    'Liu-SUITAS', load_image_set({'<PATH_TO_Liu-SUITAS_SIGNATURE>'}), ...
+    fullfile(basedir, 'results', 'comparison_existing_signatures') % CANVIAR
+    'VITCS-early', fullfile(basedir, 'results', 'VITCS_early_results', 'pat_exp_test_set_VITCS.xlsx'), ...
+    fullfile(basedir, 'results', 'VITCS_early_results')
+    'VITCS-late', fullfile(basedir, 'results', 'VITCS_late_results', 'pat_exp_test_set_VITCS.xlsx'), ...
+    fullfile(basedir, 'results', 'VITCS_late_results')
+};
 
-common_idx = intersect(intersect(pat_exp.Properties.RowNames, skin.Properties.RowNames), subj_rat.Properties.RowNames);
-common_idx2 = intersect(pat_exp.Properties.RowNames, subj_rat.Properties.RowNames);
+%% Load data
+skin = readtable(scr_path, 'ReadRowNames', true);
+subj_rat = readtable(subj_rat_path, 'ReadRowNames', true);
 
-pat_exp_subset = pat_exp_sub(common_idx, :);
-skin_subset = skin_sub(common_idx, :);
-subj_rat_subset = subj_rat_sub(common_idx, :);
+skin_sub = skin(:, 'Cond_CSplus_mean');
+skin_sub.Properties.VariableNames = cols_pat_exp;
 
-pat_exp_subset = pat_exp_sub(common_idx2, :);
-subj_rat_subset = subj_rat_sub(common_idx2, :);
-newRows = array2table(ones(length(setdiff(common_idx2, common_idx, 'stable')), width(skin_sub)), ...
-    'VariableNames', skin_sub.Properties.VariableNames);
-newRows.Properties.RowNames = setdiff(common_idx2, common_idx, 'stable');
-skin_subset = [skin_sub; newRows];
-skin_subset = skin_subset(pat_exp_subset.Properties.RowNames, :);
+subj_rat_sub = subj_rat(:, {'COND_CSplus_ARO', 'COND_CSplus_VAL'});
 
-X = zscore(pat_exp_subset.("VITS_CS+")); % VITS_CS+rev
-X = pat_exp_subset.("VITS_CS+") - pat_exp_subset.("VITS_CS-"); % VITS_CS+rev
-% X = pat_exp_subset.("suitas_CS+") - pat_exp_subset.("suitas_CS-"); % suitas_CS+rev
+for s = 1:size(signatures,1)
+    savedir = signatures{s,3};
 
-% Y = subj_rat_subset.COND_CSplus_ARO; % COND_CSplus_ARO REV_New_CSplus_ARO
-% Y = subj_rat_subset.COND_CSplus_ARO - subj_rat_subset.COND_Csminus_ARO; % COND_CSplus_ARO REV_New_CSplus_ARO
-Y = (subj_rat_subset.COND_CSplus_VAL - 6)*-1; % COND_CSplus_VAL REV_New_Csplus_VAL
-% Y = (subj_rat_subset.COND_CSplus_VAL - 6)*-1 - (subj_rat_subset.COND_CSminus_VAL - 6)*-1; % COND_CSplus_VAL REV_New_Csplus_VAL
+    pat_exp = readtable(signatures{s,2}, 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
+    pat_exp.Properties.RowNames = erase(pat_exp.Properties.RowNames, "sub-");
+    pat_exp_sub = pat_exp(:, [signatures{s,1} '_CS+']);
+    
+    %% Build the two samples: full (N=172) and SCR-available (n=165)
+    full_idx = intersect(pat_exp.Properties.RowNames, subj_rat.Properties.RowNames);   % pattern expression + ratings
+    scr_idx  = intersect(full_idx, skin.Properties.RowNames);                          % + usable SCR
+    
+    fprintf('Full sample (pattern expression + ratings): N = %d\n', length(full_idx));
+    fprintf('SCR-available subsample: n = %d\n', length(scr_idx));
+    
+    pat_exp_full = pat_exp_sub(full_idx, :);
+    subj_rat_full = subj_rat_sub(full_idx, :);
+    
+    pat_exp_scr = pat_exp_sub(scr_idx, :);
+    subj_rat_scr = subj_rat_sub(scr_idx, :);
+    skin_scr = skin_sub(scr_idx, :);
+    
+    %% Define X (VITCS), M (SCR) for the mediation model
+    X_full = pat_exp_full.([signatures{s,1} '_CS+']);
+    X_scr  = pat_exp_scr.([signatures{s,1} '_CS+']); 
+    M_scr  = skin_scr.Cond_CSplus_mean; 
+    
+    % Y: arousal and valence, as two separate models (valence reverse-coded
+    % so higher = more negative, matching "perceived negative valence").
+    Y_arousal_full = subj_rat_full.COND_CSplus_ARO;
+    Y_valence_full = (subj_rat_full.COND_CSplus_VAL - 6) * -1;
+    
+    Y_arousal_scr = subj_rat_scr.COND_CSplus_ARO;
+    Y_valence_scr = (subj_rat_scr.COND_CSplus_VAL - 6) * -1;
+    
+    %% Path c: total effect of VITCS on subjective ratings, full sample (N=172)
+    % Direct regression, Y ~ X - no mediator involved.
+    x_design = [ones(size(X_full)) X_full];
+    
+    [beta_arousal, ~, ~, ~, stats_arousal] = regress(Y_arousal_full, x_design);
+    XtX_inv = inv(x_design' * x_design);
+    se_arousal = sqrt(stats_arousal(4) * XtX_inv(2, 2));
+    t_arousal = beta_arousal(2) / se_arousal;
+    fprintf('\nPath c (arousal, N=%d):\nCoeff = %.5f\nSE = %.5f\nt = %.3f\np = %.5f\n', ...
+        length(full_idx), beta_arousal(2), se_arousal, t_arousal, stats_arousal(3));
+    
+    [beta_valence, ~, ~, ~, stats_valence] = regress(Y_valence_full, x_design);
+    se_valence = sqrt(stats_valence(4) * XtX_inv(2, 2));
+    t_valence = beta_valence(2) / se_valence;
+    fprintf('\nPath c (valence, N=%d):\nCoeff = %.5f\nSE = %.5f\nt = %.3f\np = %.5f\n', ...
+        length(full_idx), beta_valence(2), se_valence, t_valence, stats_valence(3));
+    
+    %% Mediation (paths a, b, c', a*b), SCR-available subsample (n=165)
+    [paths_arousal, stats_mediation_arousal] = mediation(X_scr, Y_arousal_scr, M_scr, ...
+        'plots', 'boot', 'bootsamples', 10000, 'verbose', 'doCIs');
+    
+    [paths_valence, stats_mediation_valence] = mediation(X_scr, Y_valence_scr, M_scr, ...
+        'plots', 'boot', 'bootsamples', 10000, 'verbose', 'doCIs');
 
-M = skin_subset.("VITS_CS+");  % VITS_CS+rev
-M = skin_subset.("VITS_CS+") - skin_subset.("VITS_CS-");  % VITS_CS+rev
-% M = skin_subset.("suitas_CS+") - skin_subset.("suitas_CS-");  % suitas_CS+rev
-
-% [paths, stats2] = mediation(X, Y, M, 'plots', 'verbose', 'doCIs');
-[paths, stats3] = mediation(X, Y, M, 'plots', 'boot', 'bootsamples', 10000, 'verbose', 'doCIs'); %, 'plots'
-
-[r,p] = corr(X, Y)
-[r,p] = corr(X, M)
-
-%% Bootstrapp to compare VITCS vs SUITAS
-
-% path c: Y = cX + E
-% In each interation, we calculate c for both and we save the difference
-% We have 10000 differences
-% Calculate statistical inference (is this difference significantly
-% different from 0?) --> prctile [2.5, 97.5] --> 2,5 x 2 = 5 -> 95% conf
-
-vitcs = readtable(fullfile(basedir, '2_SVM_results_stai/pat_exp_all_data_xval.xlsx'), 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
-suitas = readtable(fullfile(basedir, '1_sig_evaluation/pat_exp_SUITAS.xlsx'), 'ReadRowNames', true, 'VariableNamingRule', 'preserve');
-
-X_vitcs = zscore(vitcs.("CS+"));
-X_suitas = zscore(suitas.("suitas_CS+"));
-Y = zscore(subj_rat_subset.COND_CSplus_ARO);
-% Y = zscore((subj_rat_subset.COND_CSplus_VAL - 6)*-1);
-
-nBoot = 10000;
-N = length(Y);
-
-delta_c = nan(nBoot,1);
-
-for b = 1:nBoot
-    idx = randsample(N, N, true);
-
-    Xv = X_vitcs(idx);
-    Xs = X_suitas(idx);
-    Yb = Y(idx);
-
-    c_v = regress(Yb, [ones(N,1) Xv]);
-    c_s = regress(Yb, [ones(N,1) Xs]);
-
-    delta_c(b) = c_v(2) - c_s(2);
+    %% Save results
+    if ~exist(savedir, 'dir'); mkdir(savedir); end
+    save(fullfile(savedir, 'mediation_results.mat'), 'full_idx', 'scr_idx', ...
+        'beta_arousal', 'se_arousal', 't_arousal', 'stats_arousal', ...
+        'beta_valence', 'se_valence', 't_valence', 'stats_valence', ...
+        'paths_arousal', 'stats_mediation_arousal', ...
+        'paths_valence', 'stats_mediation_valence');
 end
-
-CI = prctile(delta_c, [2.5 97.5]);
-p = mean(abs(delta_c) >= abs(mean(delta_c)));  % opcional
-
-
-corr(X_suitas, Y)
-corr(X_vitcs, Y)
-
-%% calculate direct correlations! VITS - Subj.Ratings (més sample)
-common_idx2 = intersect(pat_exp.Properties.RowNames, subj_rat.Properties.RowNames);
-pat_exp_subset2 = pat_exp_sub(common_idx2, :);
-subj_rat_subset2 = subj_rat_sub(common_idx2, :);
-
-% X2 = pat_exp_subset2.("VITS_CS+"); % VITS_CS+rev
-X2 = pat_exp_subset2.("suitas_CS+"); % suitas_CS+rev
-% Y2 = subj_rat_subset2.COND_CSplus_ARO; % COND_CSplus_ARO REV_New_CSplus_ARO
-Y2 = (subj_rat_subset2.COND_CSplus_VAL - 6)*-1; % COND_CSplus_VAL REV_New_Csplus_VAL
-
-% [RHO,PVAL] = corr(pat_exp_subset2.("VITS_CS+"), subj_rat_subset2.COND_CSplus_ARO)
- % 'bootsamples', 10000
-
-% Regression
-fprintf('\nREGRESSION\n')
-
-% [betaXY2, statsXY2] = robustfit(X2, Y2);
-% fprintf('\nRelation X2-Y2:\nCoeff = %.5f\nSTE = %.5f\nt = %.5f\np = %.5f\n', ...
-%     betaXY2(2), statsXY2.se(2), statsXY2.t(2), statsXY2.p(2));
-x2=[ones(size(X2)) X2];
-[betaXY2, ~, residuals, ~, statsXY2] = regress(Y2,x2);
-XtX_inv = inv(x2' * x2);
-STE = sqrt(statsXY2(4) * XtX_inv(2,2));
-t = betaXY2(2) / STE;
-fprintf('\nRelation X2-Y2 (regress):\nCoeff = %.5f\nSTE = %.5f\nt = %.3f\np = %.5f\n', ...
-    betaXY2(2), STE, t, statsXY2(3));
-
-% comprovació!
-% [betaXY, statsXY] = robustfit(X, Y);
-% fprintf('\nRelation X-Y:\nCoeff = %.5f\nSTE = %.5f\nt = %.5f\np = %.5f\n', ...
-%     betaXY(2), statsXY.se(2), statsXY.t(2), statsXY.p(2));
-x=[ones(size(X)) X];
-[betaXY, ~, residuals, ~, statsXY] = regress(Y,x);
-XtX_inv = inv(x' * x);
-STE = sqrt(statsXY(4) * XtX_inv(2,2));
-t = betaXY(2) / STE;
-fprintf('\nRelation X-Y (regress):\nCoeff = %.5f\nSTE = %.5f\nt = %.3f\np = %.5f\n', ...
-    betaXY(2), STE, t, statsXY(3));
-
-
-% [betaXM, statsXM] = robustfit(X, M);
-% fprintf('\nRelation X-M:\nCoeff = %.5f\nSTE = %.5f\nt = %.5f\np = %.5f\n', ...
-%     betaXM(2), statsXM.se(2), statsXM.t(2), statsXM.p(2));
-[betaXM, ~, residuals, ~, statsXM] = regress(M,x);
-STE = sqrt(statsXM(4) * XtX_inv(2,2));
-t = betaXM(2) / STE;
-fprintf('\nRelation X-M (regress):\nCoeff = %.5f\nSTE = %.5f\nt = %.3f\np = %.5f\n', ...
-    betaXM(2), STE, t, statsXM(3));
-
-
-% --- Bootstrap del coeficient ---
-nBoot = 1000;
-n = length(Y2);
-B = zeros(nBoot,1);
-for i = 1:nBoot
-    idx = randsample(n, n, true);
-    Xb = [ones(n,1) X2(idx)];
-    Yb = Y2(idx);
-    b = regress(Yb, Xb);
-    B(i) = b(2);
-end
-
-beta_obs = betaXY2(2);
-beta_boot_mean = mean(B);
-se_boot = std(B);
-ci_boot = prctile(B, [2.5 97.5]);
-z = beta_obs / se_boot;
-p_norm_approx = 2 * (1 - 0.5*(1+erf(abs(z)/sqrt(2))));  % equivalent normcdf
-
-fprintf('\nBootstrap (%d it):\nCoeff(mean) = %.5f\nSTE(boot) = %.5f\nIC95%% = [%.5f, %.5f]\n', ...
-    nBoot, beta_boot_mean, se_boot, ci_boot(1), ci_boot(2));
-fprintf('p (normal approx) = %.5f\n', p_norm_approx);
-
-% --- Permutation test (no paramètric) ---
-nPerm = 5000;
-beta_perm = zeros(nPerm,1);
-for i = 1:nPerm
-    idx = randperm(n);    % permutació sense reemplaçament (H0)
-    Yp = Y2(idx);
-    b = regress(Yp, x2);
-    beta_perm(i) = b(2);
-end
-p_perm = mean(abs(beta_perm) >= abs(beta_obs));
-fprintf('p (permutation, %d perm) = %.5f\n', nPerm, p_perm);
-
-
-
-
-% beta(2)     = coeff
-% stats.se(2) = Standard error
-% stats.t(2)  = t-statistic
-% stats.p(2)  = p-value
-
-% Correlation
-% fprintf('\nCORRELATION\n')
-% 
-% [RHOXY2,PVALXY2] = corr(X2, Y2);
-% fprintf('\nRelation X2-Y2:\nCoeff = %.5f\np = %.5f\n', ...
-%     RHOXY2, PVALXY2);
-% 
-% % comprovació!
-% [RHOXY,PVALXY] = corr(X, Y);
-% fprintf('\nRelation X-Y:\nCoeff = %.5f\np = %.5f\n', ...
-%     RHOXY, PVALXY);
-% 
-% [RHOXM,PVALXM] = corr(X, M);
-% fprintf('\nRelation X-M:\nCoeff = %.5f\np = %.5f\n', ...
-%     RHOXM, PVALXM);

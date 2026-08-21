@@ -91,6 +91,12 @@ xval_dist_C1 = stats_CV_10f.dist_from_hyperplane_xval;
 outcome_C1 = training_data.Y == 1;
 save(fullfile(savedir, 'VITCS_roc_inputs.mat'), 'xval_dist_C1', 'outcome_C1');
 
+% Per-fold weight objects (one trained model per left-out fold), needed
+% to compute out-of-fold pattern expression for TRAINING subjects.
+% (04b_full_sample_xval_pattern_expression.m)
+other_output_cv = stats_CV_10f.other_output_cv;
+save(fullfile(output_dir, 'VITCS_CV_10fold_weights.mat'), 'other_output_cv', 'sample_folds');
+
 %% Optional: Regularization sensitivity analysis (Supplementary Table 2)
 if run_sensitivity_analysis
     C_values = [0.01, 0.1, 1, 10];   % C=1 included so it appears as a row too, alongside 0.01/0.1/10
@@ -106,9 +112,7 @@ if run_sensitivity_analysis
         classifier_label(i) = sprintf('SVM (C=%s)', num2str(C_val));
  
         if C_val == 1
-            % Already trained above - reuse stats_CV_10f/sig instead of
-            % re-running predict().
-            stats_this_C = stats_CV_10f;
+            stats_this_C = stats_CV_10f; % Already trained above.
             sig_this_C = sig;
         else
             [~, stats_this_C] = predict(training_data, 'algorithm_name', 'cv_svm', ...
@@ -117,8 +121,7 @@ if run_sensitivity_analysis
             sig_this_C = stats_this_C.weight_obj;
         end
  
-        % Accuracy (+/- SE) via forced-choice ROC on the CV distances,
-        % same approach as Table 1 (see 04_test_set_reversal.m).
+        % Accuracy (+/- SE) via forced-choice ROC on the CV distances.
         rp = roc_plot(stats_this_C.dist_from_hyperplane_xval, training_data.Y == 1, ...
             'threshold', 'pairedobservations');
         accuracy(i) = rp.accuracy;

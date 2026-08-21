@@ -22,19 +22,18 @@ addpath('utils');
 
 %% User-defined paths (TO EDIT)
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
+contrastdir = '<PATH_TO_CONTRASTS>';   % <-- EDIT THIS
+contrast_subpath = fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL'); % <-- EDIT IF YOUR FOLDER STRUCTURE DIFFERS
+
 datadir = fullfile(basedir, 'data');   % <-- if necessary, EDIT THIS
 savedir = fullfile(basedir, 'results', 'VITCS_development');   % <-- if necessary, EDIT THIS
-list_subj = {}; % <-- EDIT THIS, same as s01_train_test_split.m: list of subjects to include
 
-CSp_paths = {'<PATHS_TO_CS+_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS+ contrast files
-CSm_paths = {'<PATHS_TO_CS-_CONTRAST_DATA>'}; % <-- EDIT THIS: cell array with all CS- contrast files
-
-contrastdir = '/Users/acalvet/Documents/MVPA_FISAX/DATA/contrasts_brainmask';
 contdirs = dir(contrastdir);
 list_subj = {contdirs([contdirs.isdir]).name};
 list_subj = list_subj(~ismember(list_subj, {'.', '..'}));
-CSp_paths = fullfile(contrastdir, list_subj, 'REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL', 'con_0011_mask.nii');
-CSm_paths = fullfile(contrastdir, list_subj, 'REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL', 'con_0012_mask.nii');
+
+CSp_paths = fullfile(contrastdir, list_subj, contrast_subpath, '<CS+_contrast_name>.nii'); % <-- EDIT contrast name
+CSm_paths = fullfile(contrastdir, list_subj, contrast_subpath, '<CS-_contrast_name>.nii'); % <-- EDIT contrast name
 
 %% Train the main VITCS model (all acquisition trials)
 % Run VITCS training with sensitivity analysis and predefined folds for the

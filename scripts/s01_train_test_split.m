@@ -14,10 +14,15 @@ clear; clc;
 
 %% User-defined paths (TO EDIT)
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS
+contrastdir = '<PATH_TO_CONTRASTS>';   % <-- EDIT THIS
 datadir = fullfile(basedir, 'data');   % <-- if necessary, EDIT THIS
-list_subj = {}; % <-- EDIT THIS: list of subjects to include
 data_excel_path = '<PATH_TO_STAI-T_DATA>';   % <-- EDIT THIS
 stai_t_var_name = 'STAI_T_A';   % <-- EDIT THIS: name of the column with STAI-T data
+
+% O SI QUIEREN CAMBIAR LA FORMA...
+contdirs = dir(contrastdir);
+list_subj = {contdirs([contdirs.isdir]).name};
+list_subj = list_subj(~ismember(list_subj, {'.', '..'}));
 
 % If true, load the exact Training/Test indices used in the manuscript
 % (provided in this repository) instead of regenerating a new random
