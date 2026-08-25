@@ -22,11 +22,17 @@ addpath('utils');
 
 %% User-defined paths (TO EDIT)
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
-sigdir  = fullfile(basedir, 'results', 'VITCS_development');   % where 02_train_VITCS_signature.m wrote its outputs
-list_subj = {}; % <-- EDIT THIS, same as s01_train_test_split.m: list of subjects to include
+contrastdir = '<PATH_TO_CONTRASTS>';   % <-- EDIT THIS
+contrast_subpath = fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL'); % <-- EDIT IF YOUR FOLDER STRUCTURE DIFFERS
 
-%% Main VITCS model -------------------------------------------------------------
-% CS+ / CS- = con_0011_mask / con_0012_mask
-contrast_files = {'con_0011_mask', 'con_0012_mask'};
+sigdir  = fullfile(basedir, 'results', 'VITCS_development');   % where 02_train_VITCS_signature.m wrote its outputs
+savedir = fullfile(basedir, 'results', 'VITCS_validation');   % <-- if necessary, EDIT THIS
+
+contrast_files = {'<name_CS+_file>'; '<name_CS-_file>'};     % <-- EDIT THIS
 contrast_names = {'CS+', 'CS-'};
-run_full_sample_pattern_expression(basedir, contrast_files, contrast_names, sigdir, sigdir)
+% 'CS+'/'CS-'       -> acquisition (Conditioning) contrasts
+% 'newCS+'/'newCS-' -> reversal contrasts
+
+%% Main VITCS model
+run_full_sample_xval_pattern_expression(basedir, contrastdir, contrast_subpath, ...
+    contrast_files, contrast_names, sigdir, sigdir)

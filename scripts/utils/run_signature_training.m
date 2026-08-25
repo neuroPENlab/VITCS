@@ -1,8 +1,8 @@
 function run_signature_training(basedir, CSp_paths, CSm_paths, output_dir, varargin)
 %   Train a VITCS-family SVM signature with 10-fold CV.
 %
-%   RUN_VITCS_TRAINING(basedir, CSp_file, CSm_file, output_dir)
-%   RUN_VITCS_TRAINING(..., 'run_sensitivity_analysis', true)
+%   RUN_SIGNATURE_TRAINING(basedir, CSp_paths, CSm_paths, output_dir)
+%   RUN_SIGNATURE_TRAINING(..., 'run_sensitivity_analysis', true)
 %
 %   Shared training routine used for the main VITCS model (all
 %   acquisition trials) and the stage-specific VITCS-early / VITCS-late
@@ -74,7 +74,7 @@ rp = roc_plot(stats_CV_10f.dist_from_hyperplane_xval, training_data.Y == 1, 'thr
 title('ROC plot 10-fold CV (C=1)')
 
 sig = stats_CV_10f.weight_obj;
-sig.fullpath = fullfile(savedir, 'VITCS_unthresholded_10foldCV.nii');
+sig.fullpath = fullfile(output_dir, 'VITCS_unthresholded_10foldCV.nii');
 write(sig);
 
 % Cohen's D
@@ -82,14 +82,14 @@ dif_xval_dist = stats_CV_10f.dist_from_hyperplane_xval(1:n_tr_set ...
     ) - stats_CV_10f.dist_from_hyperplane_xval(n_tr_set+1:end);
 d_cv = mean(dif_xval_dist)/std(dif_xval_dist);
 
-fprintf(['10-fold CV misclassification rate (C=1): %.4f; accuracy: %.4f; sensitivity: %.4f; ' ...
-    'specificity: %.4f; p-value: %.4f; Cohens D: %.4f\n'], ...
-    stats_CV_10f.error_obj.mcr, rp.accuracy, rp.sensitivity, rp.specificity, rp.accuracy_p, d_cv);
+fprintf(['10-fold CV (C=1): accuracy: %.4f; sensitivity: %.4f; specificity: %.4f; ' ...
+    'p-value: %.4f; Cohens D: %.4f\n'], rp.accuracy, rp.sensitivity, ...
+    rp.specificity, rp.accuracy_p, d_cv);
 
 % Save cross-validated distance-from-hyperplane values for the ROC figure
 xval_dist_C1 = stats_CV_10f.dist_from_hyperplane_xval;
 outcome_C1 = training_data.Y == 1;
-save(fullfile(savedir, 'VITCS_roc_inputs.mat'), 'xval_dist_C1', 'outcome_C1');
+save(fullfile(output_dir, 'VITCS_roc_inputs.mat'), 'xval_dist_C1', 'outcome_C1');
 
 % Per-fold weight objects (one trained model per left-out fold), needed
 % to compute out-of-fold pattern expression for TRAINING subjects.
@@ -135,7 +135,7 @@ if run_sensitivity_analysis
  
     writetable(sensitivity_table, fullfile(output_dir, 'supplementary_table2_C_sensitivity.csv'));
     save(fullfile(output_dir, 'supplementary_table2_C_sensitivity.mat'), 'sensitivity_table');
-    fprintf('Sensitivity analysis')
+    fprintf('Sensitivity analysis\n')
     disp(sensitivity_table);
 end
 

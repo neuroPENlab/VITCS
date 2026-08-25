@@ -2,7 +2,7 @@ import gl
 from os.path import join
 
 basedir = '<PATH_TO_PROJECT>' # <-- EDIT THIS
-outputdir = join(basedir, 'results', 'reliable_anatomy')
+outputdir = join(basedir, 'results', 'VITCS_development', 'reliable_anatomy')
 figdir = join(basedir, 'figures')
 
 gl.resetdefaults()
@@ -41,6 +41,6 @@ gl.minmax(6, 0, 1.3)
 
 gl.colorbarposition(0)
 
-gl.mosaic("A H 0.08 V 0.08 52 22 17 -9 S H 0.08 V 0.08 -44 -34 -9.5 C H 0.08 V 0.08 48 -28")
+gl.mosaic("A H 0 V 0 60 37 32.2 27 18 0 -6 -21; C H 0 V 0 -2.3 -29.6")
 
-gl.savebmp(join(figdir, 'sup_fig6a_VITCS_early.png'))
+gl.savebmp(join(figdir, 'fig2a_VITCS.png'))

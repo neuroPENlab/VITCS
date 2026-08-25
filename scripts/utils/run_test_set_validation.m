@@ -1,39 +1,35 @@
-function results = run_test_set_validation(basedir, sig_path, roc_inputs_path, output_dir, model_label)
+function results = run_test_set_validation(basedir, contrastdir, contrast_subpath, ...
+    contrast_files, contrast_names, sig_path, roc_inputs_path, output_dir, model_label)
 %   Evaluate a VITCS-family signature on the Test Set.
 %
-%   results = RUN_VITCS_TEST_EVALUATION(basedir, sig_path, ...
-%       roc_inputs_path, output_dir, model_label)
-%
-%   Shared evaluation routine for the main VITCS model and the
-%   VITCS-early / VITCS-late variants - see Methods/Supplementary Text:
-%   "[VITCS-early] achieved 86% 10-fold cross-validated accuracy, 91%
-%   accuracy in the independent Test Set, and 88% accuracy when applied
-%   to the reversal-learning phase. The VITCS-late model [...] yielding
-%   accuracies of 85%, 94%, and 97%, respectively." I.e. the same
-%   evaluation procedure (10-fold CV performance + Test Set performance
-%   on both the acquisition and reversal contrasts) is applied to all
-%   three models; only the input signature differs.
+%   results = RUN_VITCS_TEST_VALIDATION(basedir, contrastdir, contrast_subpath, ...
+%   contrast_files, contrast_names, sig_path, roc_inputs_path, output_dir, model_label)
 %
 %   INPUTS
-%       basedir         - project root
-%       sig_path        - path to this model's unthresholded signature
-%                          .nii (output of run_VITCS_training.m)
-%       roc_inputs_path - path to this model's VITCS_roc_inputs.mat
+%       basedir          - project root
+%       contrastdir      - directory containing one subfolder per subject with 
+%                          that subject's first-level contrast images
+%       contrast_subpath - subfolder path (relative to each subject's folder in 
+%                          contrastdir) where the contrast images live, e.g.
+%                          fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL')
+%       contrast_files   - cell array of contrast image filenames (without extension) 
+%                          to compute pattern expression for, e.g. {'CS+'; 'CS-'}
+%       contrast_names   - cell array of column names (same length/order as 
+%                          contrast_files), e.g. {'CS+', 'CS-'}
+%       sigdir           - path to this model's unthresholded signature .nii 
+%                          (from run_signature_training.m)
+%       roc_inputs_path  - path to this model's VITCS_roc_inputs.mat
 %                          (10-fold CV distances, also from
-%                          run_VITCS_training.m)
-%       output_dir      - directory to write this model's evaluation
-%                          outputs to
-%       model_label     - short string used in filenames, e.g. 'VITCS',
+%                          run_signature_training.m)
+%       output_dir       - directory to write this model's evaluation outputs to
+%       model_label      - short string used in filenames, e.g. 'VITCS',
 %                          'VITCS_early', 'VITCS_late'
 %
 %   OUTPUT
-%       results - struct with per-participant distances/outcomes for
-%                 the acquisition and reversal contrasts (dist_cond,
-%                 outcome_cond, dist_rev, outcome_rev) plus the
-%                 pattern-expression table and the Table 1 summary.
-%                 Returned (not just saved) so the calling script can
-%                 run cross-model comparisons (e.g. McNemar's test)
-%                 without re-loading everything from disk.
+%       results - struct with per-participant distances/outcomes for the 
+%                 acquisition and reversal contrasts (dist_cond, outcome_cond, 
+%                 dist_rev, outcome_rev) plus the pattern-expression table 
+%                 and the Table 1 summary.
 %
 %   Dependencies: CANlab Core Tools (fmri_data, canlab_pattern_similarity,
 %                 roc_plot)
@@ -42,31 +38,13 @@ if ~exist(output_dir, 'dir'); mkdir(output_dir); end
 
 %% User-defined paths (TO EDIT, if necessary)
 datadir = fullfile(basedir, 'data');
-sigdir  = fullfile(basedir, 'results', 'VITCS_development');   % where 02_train_VITCS_signature.m wrote its outputs
-if ~exist(savedir, 'dir'); mkdir(savedir); end
 maskdir = fullfile(datadir, 'brainmask.nii');
-
-list_subj = {}; % <-- EDIT THIS, same as s01_train_test_split.m: list of subjects to include
-
-contrastdir = '<PATHS_TO_CONTRAST_DATA>'; % <-- EDIT THIS: general path where all contrast data is stored
-contrast_subpath = fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL'); % <-- EDIT IF YOUR FOLDER STRUCTURE DIFFERS
-
-contrast_files = {{'<name_CS+_file>'; '<name_CS-_file>'}, ...
-    {'<name_newCS+_file>'; '<name_newCS-_file>'}};
-contrast_names = {{'CS+', 'CS-'}, {'newCS+', 'newCS-'}};
-% 'CS+'/'CS-'       -> acquisition (Conditioning) contrasts
-% 'newCS+'/'newCS-' -> reversal contrasts
 
 metric = 'dot_product';
 
-contrastdir = '/Users/acalvet/Documents/MVPA_FISAX/DATA/contrasts_brainmask';
-
-contrast_files = {{'con_0011_mask'; 'con_0012_mask'}, ...
-    {'con_0017_mask'; 'con_0018_mask'}};  % <-- EDIT THIS
-
 contdirs = dir(contrastdir);
 list_subj = {contdirs([contdirs.isdir]).name};
-list_subj = list_subj(~ismember(list_subj, {'.', '..'}))';
+list_subj = list_subj(~ismember(list_subj, {'.', '..'}));
 
 %% Load signature and test set subject list
 sig = fmri_data(sig_path, maskdir);
@@ -75,7 +53,8 @@ ts_set = load(fullfile(datadir, 'test_data.mat')).ts_set;
 subj_ts = list_subj(ts_set);
 
 %% Calculate and save pattern expression
-res_pat_exp = array2table(zeros(length(subj_ts), 4), 'VariableNames', reshape([contrast_names{:}]', [], 1));
+res_pat_exp = array2table(zeros(length(subj_ts), numel([contrast_names{:}])), ...
+    'VariableNames', reshape([contrast_names{:}]', [], 1));
 res_pat_exp.Properties.RowNames = subj_ts;
 
 for C = 1:length(contrast_files)
@@ -149,6 +128,6 @@ results.pat_exp_rev = pat_exp_rev;
 results.outcome_rev = outcome_rev;
 results.CV_roc_inputs = CV_roc_inputs;
 
-save(fullfile(savedir, 'validation_test_set_results.mat'), '-struct', 'results');
+save(fullfile(output_dir, 'validation_test_set_results.mat'), '-struct', 'results');
 
 end

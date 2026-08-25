@@ -2,11 +2,7 @@
 # Usage:
 #   ./prune_clusters.sh <BASE> <REF> <OUT> [MIN_FRAC] [MIN_VOX]
 # Example:
-#   ./prune_clusters.sh unc001_pos_bin.nii.gz FDR05_pos_bin.nii.gz UNC001_pos_prunedfdr05_pos.nii.gz 0.00 1
-#   ./prune_clusters.sh unc01_pos_bin.nii.gz FDR05_pos_bin.nii.gz UNC01_pos_prunedfdr05_pos.nii.gz 0.05 10
-
-# bash cluster_prunning.sh /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/unc001_pos.nii.gz /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/fdr05_pos.nii.gz /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/UNC001_pos_prunedfdr05_pos.nii.gz 0.00 1
-# bash cluster_prunning.sh /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/unc01_pos.nii.gz /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/fdr05_pos.nii.gz /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/UNC01_pos_prunedfdr05_pos.nii.gz 0.00 1
+#   ./prune_clusters.sh unc001_pos_bin.nii.gz FDR05_pos_bin.nii.gz UNC001_prunedfdr05_pos.nii.gz 0.00 1
 
 set -euo pipefail
 

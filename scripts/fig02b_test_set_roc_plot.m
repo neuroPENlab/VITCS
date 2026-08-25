@@ -1,10 +1,10 @@
-%% fig02_test_set_roc_plot.m
+%% fig02b_test_set_roc_plot.m
 % -------------------------------------------------------------------
 % Plot the three ROC curves (Training set 10-fold CV, Test set
 % Acquisition, Test set Reversal) together, as in the manuscript
 % figure.
 %
-% Requires 03_validation_test_set.m to have been run first.
+% Requires s03_1_validation_test_set.m to have been run first.
 %
 % Dependencies: CANlab Core Tools (roc_plot)
 % -------------------------------------------------------------------
@@ -12,7 +12,6 @@ clear; clc;
 
 %% User-defined paths (TO EDIT)
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
-basedir = '/Users/acalvet/Repositories/neuroPENlab/VITCS';
 savedir = fullfile(basedir, 'results', 'VITCS_validation');   % <-- if necessary, EDIT THIS
 figdir  = fullfile(basedir, 'figures');
 if ~exist(figdir, 'dir'); mkdir(figdir); end

@@ -24,8 +24,6 @@ addpath('utils');
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
 contrastdir = '<PATH_TO_CONTRASTS>';   % <-- EDIT THIS
 contrast_subpath = fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL'); % <-- EDIT IF YOUR FOLDER STRUCTURE DIFFERS
-
-datadir = fullfile(basedir, 'data');   % <-- if necessary, EDIT THIS
 savedir = fullfile(basedir, 'results', 'VITCS_development');   % <-- if necessary, EDIT THIS
 
 contdirs = dir(contrastdir);

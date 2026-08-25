@@ -3,17 +3,19 @@
 % Plot pattern expression (VITCS dot product) for CS+ vs. CS- in the
 % Test Set, separately for the acquisition and reversal contrasts.
 %
-% Requires 03_validation_test_set.m to have been run first.
+% Requires s03_1_validation_test_set.m to have been run first.
+%
+% For the VITCS-early and VITCS-late ROC plot, change the savedir to point
+% to its validation_test_set_results.mat folder respectively. 
 %
 % Dependencies: utils/barplot_columns_angels.m (modified from CANlab's
 %               barplot_columns.m - see file header for license note)
 % -------------------------------------------------------------------
 clear; clc;
-addpath('../utils');
+addpath('utils');
 
 %% User-defined paths (TO EDIT)
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
-basedir = '/Users/acalvet/Repositories/neuroPENlab/VITCS';
 savedir = fullfile(basedir, 'results', 'VITCS_validation');   % <-- if necessary, EDIT THIS
 figdir  = fullfile(basedir, 'figures');
 if ~exist(figdir, 'dir'); mkdir(figdir); end

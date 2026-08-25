@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
-@author: acalvet
+figsup03_neurosynth_wordcloud.py
+@author: Angels Calvet-Mirabent
 """
 from os.path import join
 import pandas as pd
@@ -19,18 +19,20 @@ wc = WordCloud(
     colormap='viridis'
 )
 # Define text based on Neurosynth terms from the decoding
-save_path = '/Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai'
-path_excel = '/Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai/neurosynth_unc001_pruned05.xlsx' # A DATA!
+basedir = '<PATH_TO_PROJECT>'  # <-- EDIT THIS, same as other scripts
+
+figdir = join(basedir, 'figures')
+path_excel = '<PATH_TO_NEUROSYNTH_EXCEL>'  # <-- EDIT THIS, same as other scripts
 excel = pd.read_excel(path_excel, sheet_name='NEGATIVE_ABS') # ALL POSITIVE NEGATIVE_ABS NEGATIVE
 
 # Generate the word cloud ANATOMIC from the text data
 text_anat = excel.loc[:,['Anatomic','Correlation_S']].set_index('Anatomic').to_dict()['Correlation_S']
 wc.fit_words(text_anat)
 # Save the word cloud to an image file
-wc.to_file(join(save_path, '/neurosynth_WC_anatomic.png'))
+wc.to_file(join(figdir, 'figsup03a_neurosynth_WC_anatomic.png'))
 
 # Generate the word cloud FUNCTIONAL from the text data
 text_func = excel.loc[:,['Functional','Correlation_F']].set_index('Functional').to_dict()['Correlation_F']
 wc.fit_words(text_func)
 # Save the word cloud to an image file
-wc.to_file(join(save_path, '/neurosynth_WC_functional.png'))
+wc.to_file(join(figdir, 'figsup03b_WC_functional.png'))

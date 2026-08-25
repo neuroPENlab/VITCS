@@ -10,9 +10,6 @@
 #       path/to/clusterimage_pos_bin.nii.gz \
 #       path/to/clusterimage_neg_bin.nii.gz
 
-
-# bash process_reliable_anatomy.sh /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/unc001_pos.nii.gz /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/fdr05_pos.nii.gz /Users/acalvet/Documents/MVPA_FISAX/TFM_git/results/final_brainmask/2_SVM_results_stai_sex/reliable_anatomy/UNC001_pos_prunedfdr05_pos.nii.gz 0.00 1
-
 set -e
 
 input_image="$1"

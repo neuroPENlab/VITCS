@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-08_anxiety_risk_analysis.py
+s08_anxiety_risk_analysis.py
 @author: Angels Calvet-Mirabent
 
 Test whether VITCS pattern expression differs between individuals at high vs. low risk for anxiety, 
@@ -13,7 +13,10 @@ captured shared variance between the two measures (80%) and was used as a compos
 Participants were subsequently divided into upper (high-risk; n = 57) and lower (low-risk; n = 57) 
 tertiles based on this composite score. VITCS pattern expression values were computed as the dot product 
 between the VITCS weight map and individual whole-brain activation maps for CS+ and CS- trials."
+
+Run once per signature: set SIGNATURE below and re-run.
 """
+import os
 from os.path import join
 import pandas as pd
 import numpy as np
@@ -26,78 +29,107 @@ from sklearn.preprocessing import StandardScaler
 
 # --- User-defined paths (TO EDIT) -------------------------------------------
 basedir = '<PATH_TO_PROJECT>'  # <-- EDIT THIS, same as other scripts
-savedir = join(basedir, 'results', 'VITCS_anxiety_risk')
+datadir = join(basedir, 'data')
 
-pattern_exp_path = '<PATH_TO_PATTERN_EXPRESSION_TABLE>'  # <-- EDIT THIS: VITCS pattern expression for CS+/CS-, full sample
 questionnaire_path = '<PATH_TO_QUESTIONNAIRE_SCORES>'    # <-- EDIT THIS: table with STAI_T_A and SCSR_P_A columns per participant
 
+# ---  Which signature to run mediation for ----------------------------------
+SIGNATURE = "VITCS" # <-- EDIT THIS: 'VITCS' | 'Reddan_Threat' | 'Liu_SUITAS' | 'VITCS_early' | 'VITCS_late'
+
+if SIGNATURE == "VITCS":
+    pat_exp_path = join(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_xval.xlsx'); # from 04b + 04d
+    pat_exp_col = ['CS+', 'CS-'];
+    savedir = join(basedir, 'results', 'VITCS_anxiety_risk');
+elif SIGNATURE == "Reddan_Threat":
+    pat_exp_path = join(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_all_signatures.xlsx'); # from 04d
+    pat_exp_col = ['Reddan_Threat_CS+', 'Reddan_Threat_CS-'];
+    savedir = join(basedir, 'results', 'comparison_existing_signatures');
+elif SIGNATURE == "Liu_SUITAS":
+    pat_exp_path = join(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_all_signatures.xlsx'); # from 04d
+    pat_exp_col = ['Liu_SUITAS_CS+', 'Liu_SUITAS_CS-'];
+    savedir = join(basedir, 'results', 'comparison_existing_signatures');
+elif SIGNATURE == "VITCS_early":
+    pat_exp_path = join(basedir, 'results', 'VITCS_early_results', 'pat_exp_full_sample_xval.xlsx'); # from 04c
+    pat_exp_col = ['CS+', 'CS-'];
+    savedir = join(basedir, 'results', 'VITCS_early_results');
+elif SIGNATURE == "VITCS_late":
+    pat_exp_path = join(basedir, 'results', 'VITCS_late_results', 'pat_exp_full_sample_xval.xlsx'); # from 04c
+    pat_exp_col = ['CS+', 'CS-'];
+    savedir = join(basedir, 'results', 'VITCS_late_results');
+else:
+    print("That's not a valid signature.")
+
+os.makedirs(savedir, exist_ok=True)
+
 #%% Load data -------------------------------------------------------------------
-patexp = pd.read_excel(pattern_exp_path, index_col=0)
+patexp = pd.read_excel(pat_exp_path, index_col=0)
 var = pd.read_excel(questionnaire_path, index_col=0).add_prefix("sub-", axis=0)
 
-
-# Quiero hacer lo mismo, que se replique con un bucle o que cambie en funcion de lo que le pongamos que en plan un swich????
 #%% PCA: composite anxiety-risk score (STAI-T + SPSRQ-P) -------------------------
 var_used = ['STAI_T_A', 'SCSR_P_A']
 col_name = 'anxiety_risk'
 
-data_used = var.loc[:, var_used]
-data_used = data_used.dropna()
-data_used = data_used.loc[patexp.index, :]
+if not os.path.exists(join(datadir, 'pc1_anxiety_risk.xlsx')):
+    data_used = var.loc[:, var_used]
+    data_used = data_used.dropna()
+    data_used = data_used.loc[patexp.index, :]
+    
+    # Data normalization
+    scaler = StandardScaler()
+    data_scaled = pd.DataFrame(data=scaler.fit_transform(data_used), columns=data_used.columns, index=data_used.index)
+    
+    # Define PCA
+    pca95 = PCA(n_components=0.95)
+    pca = pca95.fit_transform(data_scaled)
+    
+    res_pca = pd.DataFrame(pca[:, 0], index=data_used.index, columns=[col_name])
+    
+    # Explained variance
+    plt.figure(figsize=(8, 5))
+    plt.bar(range(1, pca.shape[1] + 1), pca95.explained_variance_ratio_, alpha=0.5, align='center', label='individual explained variance')
+    plt.step(range(1, pca.shape[1] + 1), pca95.explained_variance_ratio_.cumsum(), where='mid', label='cumulative explained variance')
+    for i, value in enumerate(pca95.explained_variance_ratio_):
+        plt.text(i + 1, value + 0.01, f"{value:.2f}", ha='center', fontsize=16)
+    plt.ylabel('Explained variance ratio', fontsize=19)
+    plt.xlabel('Principal components', fontsize=19)
+    plt.title('Explained variance', fontsize=20)
+    plt.legend(loc='best', fontsize=16)
+    plt.xticks(fontsize=17)
+    plt.yticks(fontsize=17)
+    plt.show()
+    
+    # Contribution of each original variable to PC1
+    plt.figure(figsize=(8, 5))
+    plt.bar(list(data_used.columns), pca95.components_[0])
+    plt.xlabel('Original features', fontsize=19)
+    plt.ylabel('Contribution', fontsize=18)
+    plt.title('Contribution of original features to PC1', fontsize=19)
+    new_labels = ['STAI-T', 'SPSRQ-P']
+    plt.xticks(ticks=range(len(new_labels)), labels=new_labels, fontsize=17)
+    plt.yticks(fontsize=17)
+    plt.show()
+    
+    # Principal component 1 (PC1) distribution
+    sns.distplot(pca[:, 0])
+    plt.xlabel('PC1 value')
+    plt.ylabel('Number of Cases')
+    plt.title(f'Distribution of PC1 {col_name}, N = {data_scaled.shape[0]}')
+    plt.show()
+    
+    # Save result
+    res_pca.to_excel(join(datadir, 'pc1_anxiety_risk.xlsx'))
 
-# Data normalization
-scaler = StandardScaler()
-data_scaled = pd.DataFrame(data=scaler.fit_transform(data_used), columns=data_used.columns, index=data_used.index)
-
-# Define PCA
-pca95 = PCA(n_components=0.95)
-pca = pca95.fit_transform(data_scaled)
-
-res_pca = pd.DataFrame(pca[:, 0], index=data_used.index, columns=[col_name])
-
-# Explained variance
-plt.figure(figsize=(8, 5))
-plt.bar(range(1, pca.shape[1] + 1), pca95.explained_variance_ratio_, alpha=0.5, align='center', label='individual explained variance')
-plt.step(range(1, pca.shape[1] + 1), pca95.explained_variance_ratio_.cumsum(), where='mid', label='cumulative explained variance')
-for i, value in enumerate(pca95.explained_variance_ratio_):
-    plt.text(i + 1, value + 0.01, f"{value:.2f}", ha='center', fontsize=16)
-plt.ylabel('Explained variance ratio', fontsize=19)
-plt.xlabel('Principal components', fontsize=19)
-plt.title('Explained variance', fontsize=20)
-plt.legend(loc='best', fontsize=16)
-plt.xticks(fontsize=17)
-plt.yticks(fontsize=17)
-plt.show()
-
-# Contribution of each original variable to PC1
-plt.figure(figsize=(8, 5))
-plt.bar(list(data_used.columns), pca95.components_[0])
-plt.xlabel('Original features', fontsize=19)
-plt.ylabel('Contribution', fontsize=18)
-plt.title('Contribution of original features to PC1', fontsize=19)
-new_labels = ['STAI-T', 'SPSRQ-P']
-plt.xticks(ticks=range(len(new_labels)), labels=new_labels, fontsize=17)
-plt.yticks(fontsize=17)
-plt.show()
-
-# Principal component 1 (PC1) distribution
-sns.distplot(pca[:, 0])
-plt.xlabel('PC1 value')
-plt.ylabel('Number of Cases')
-plt.title(f'Distribution of PC1 {col_name}, N = {data_scaled.shape[0]}')
-plt.show()
-
-# Save result
-res_pca.to_excel(join(savedir, 'pc1_anxiety_risk.xlsx'))
+else:
+    res_pca = pd.read_excel(join(datadir, 'pc1_anxiety_risk.xlsx'), index_col=0)
 
 #%% Merge PC1 anxiety-risk score with pattern expression --------------------------
 patexp_used = patexp.merge(var[['Age_A', 'Sex']], left_index=True, right_index=True).merge(res_pca[col_name], left_index=True, right_index=True)
 patexp_used = patexp_used.dropna()
-# patexp_used.to_excel(join(savedir, col_name + '_all_patexp.xlsx')) GUARDEM???????
+patexp_used.to_excel(join(savedir, col_name + '_patexp.xlsx'))
 
 # Sanity check: continuous correlation between anxiety-risk score and VITCS pattern expression
-r_csplus = pearsonr(patexp_used[col_name], patexp_used['VITCS_CS+'])
-r_csminus = pearsonr(patexp_used[col_name], patexp_used['VITCS_CS-'])
+r_csplus = pearsonr(patexp_used[col_name], patexp_used[pat_exp_col[0]])
+r_csminus = pearsonr(patexp_used[col_name], patexp_used[pat_exp_col[1]])
 print(f"anxiety_risk vs VITCS_CS+: r={r_csplus[0]:.3f}, p={r_csplus[1]:.4f}")
 print(f"anxiety_risk vs VITCS_CS-: r={r_csminus[0]:.3f}, p={r_csminus[1]:.4f}")
 
@@ -154,7 +186,7 @@ plt.tight_layout()
 plt.show()
 
 #%% Group differences in VITCS pattern expression (CS+, CS-) between tertiles ------
-for pe in ['VITCS_CS+', 'VITCS_CS-']:  # <-- EDIT IF COLUMN NAMES DIFFER
+for pe in pat_exp_col:
     low = patexp_used[patexp_used['IQ_label'] == 'Low tertile'][pe].dropna()
     high = patexp_used[patexp_used['IQ_label'] == 'High tertile'][pe].dropna()
 

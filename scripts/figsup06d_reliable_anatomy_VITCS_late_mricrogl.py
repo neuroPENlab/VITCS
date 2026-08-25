@@ -2,7 +2,7 @@ import gl
 from os.path import join
 
 basedir = '<PATH_TO_PROJECT>' # <-- EDIT THIS
-outputdir = join(basedir, 'results', 'reliable_anatomy')
+outputdir = join(basedir, 'results', 'VITCS_late_results', 'reliable_anatomy')
 figdir = join(basedir, 'figures')
 
 gl.resetdefaults()

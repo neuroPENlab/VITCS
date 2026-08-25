@@ -1,23 +1,28 @@
-function run_full_sample_pattern_expression(basedir, contrast_files, contrast_names, sigdir, output_dir)
-% canviar CSp_file, CSm_file per list dels noms dels contrasts?
-
+function run_full_sample_xval_pattern_expression(basedir, contrastdir, contrast_subpath, ...
+    contrast_files, contrast_names, sigdir, output_dir)
 %   Pattern expression (CS+/CS-) for the full sample (training + test subjects).
 %
-%   RUN_FULL_SAMPLE_PATTERN_EXPRESSION(basedir, CSp_file, ...
-%       CSm_file, sigdir, output_dir)
+%   RUN_FULL_SAMPLE_XVAL_PATTERN_EXPRESSION(basedir, contrastdir, contrast_subpath, ...
+%   contrast_files, contrast_names, sigdir, output_dir)
 %
-%   For each training-set subject, pattern expression is computed using
-%   the weight map from the 10-fold CV fold that LEFT THAT SUBJECT OUT
-%   (out-of-fold prediction), so no subject's value comes from a model
-%   trained on them. Test-set subjects use the full trained model
-%   directly.
+%   For each training-set subject, pattern expression is computed using the weight 
+%   map from the 10-fold CV fold that LEFT THAT SUBJECT OUT (out-of-fold prediction), 
+%   so no subject's value comes from a model trained on them. Test-set subjects use 
+%   the full trained model directly.
 %
 %   INPUTS
 %       basedir     - project root
-%       CSp_file    - contrast filename for CS+ (e.g. 'con_0011_mask')
-%       CSm_file    - contrast filename for CS- (e.g. 'con_0012_mask')
+%       contrastdir      - directory containing one subfolder per subject with 
+%                          that subject's first-level contrast images
+%       contrast_subpath - subfolder path (relative to each subject's folder in 
+%                          contrastdir) where the contrast images live, e.g.
+%                          fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL')
+%       contrast_files   - cell array of contrast image filenames (without extension) 
+%                          to compute pattern expression for, e.g. {'CS+'; 'CS-'}
+%       contrast_names   - cell array of column names (same length/order as 
+%                          contrast_files), e.g. {'CS+', 'CS-'}
 %       sigdir      - directory with this model's VITCS_unthresholded_10foldCV.nii
-%                     and VITCS_cv_fold_weights.mat (from run_VITCS_training.m)
+%                     and VITCS_cv_fold_weights.mat (from run_signature_training.m)
 %       output_dir  - directory to write pat_exp_full_sample_xval.xlsx to
 %
 %   Dependencies: CANlab Core Tools (fmri_data, canlab_pattern_similarity)
@@ -26,18 +31,8 @@ function run_full_sample_pattern_expression(basedir, contrast_files, contrast_na
 datadir = fullfile(basedir, 'data');
 maskdir = fullfile(datadir, 'brainmask.nii');
 
-contrastdir = '<PATHS_TO_CONTRAST_DATA>'; % <-- EDIT THIS: same as elsewhere
-contrast_subpath = fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL'); % <-- EDIT IF YOUR FOLDER STRUCTURE DIFFERS
-
 metric = 'dot_product';
 
-% COM HO FEM AIXO???
-list_subj = {}; % <-- EDIT THIS, same as s01_train_test_split.m: list of subjects to include
-
-% contrastdir = '<PATHS_TO_CONTRAST_DATA>'; % <-- EDIT THIS: general path where all contrast data is stored
-% contrast_subpath = fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL'); % <-- EDIT IF YOUR FOLDER STRUCTURE DIFFERS
-
-contrastdir = '/Users/acalvet/Documents/MVPA_FISAX/DATA/contrasts_brainmask';
 contdirs = dir(contrastdir);
 list_subj = {contdirs([contdirs.isdir]).name};
 list_subj = list_subj(~ismember(list_subj, {'.', '..'}));
@@ -45,11 +40,11 @@ list_subj = list_subj(~ismember(list_subj, {'.', '..'}));
 %% Load subject data, train/test split, and per-fold model weights 
 tr_set = load(fullfile(datadir, 'training_data.mat')).tr_set;
 
-cv_weights = load(fullfile(sigdir, 'VITCS_cv_10fold_weights.mat')); % other_output_cv, sample_folds
+cv_weights = load(fullfile(sigdir, 'VITCS_CV_10fold_weights.mat')); % other_output_cv, sample_folds
 sig = fmri_data(fullfile(sigdir, 'VITCS_unthresholded_10foldCV.nii'), maskdir);
 
 %% Compute out-of-fold (training) / full-model (test) pattern expression
-res_pat_exp = array2table(nan(length(list_subj), length(contrast_files)), 'VariableNames', all_names);
+res_pat_exp = array2table(nan(length(list_subj), length(contrast_files)), 'VariableNames', contrast_names);
 res_pat_exp.Properties.RowNames = list_subj;
 
 fold_counter = 1;   % index into sample_folds/other_output_cv, increments only for training subjects
@@ -68,7 +63,7 @@ for s = 1:length(list_subj)
     for c = 1:length(contrast_files)
         path_img = fullfile(contrastdir, subj, contrast_subpath, [contrast_files{c} '.nii']);
         data_obj = fmri_data(path_img, maskdir);
-        res_pat_exp{subj, contrast_names{c}{i}} = canlab_pattern_similarity(data_obj.dat, sig_xval.dat, metric);
+        res_pat_exp{subj, contrast_names{c}} = canlab_pattern_similarity(data_obj.dat, sig_xval.dat, metric);
     end
 end
 

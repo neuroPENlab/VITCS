@@ -19,10 +19,11 @@ datadir = fullfile(basedir, 'data');   % <-- if necessary, EDIT THIS
 data_excel_path = '<PATH_TO_STAI-T_DATA>';   % <-- EDIT THIS
 stai_t_var_name = 'STAI_T_A';   % <-- EDIT THIS: name of the column with STAI-T data
 
-% O SI QUIEREN CAMBIAR LA FORMA...
 contdirs = dir(contrastdir);
 list_subj = {contdirs([contdirs.isdir]).name};
 list_subj = list_subj(~ismember(list_subj, {'.', '..'}));
+% Remove "sub-" prefix
+list_subj = erase(list_subj, 'sub-');
 
 % If true, load the exact Training/Test indices used in the manuscript
 % (provided in this repository) instead of regenerating a new random
@@ -59,7 +60,6 @@ else
 
     save(fullfile(datadir, 'training_data.mat'), 'tr_set');
     save(fullfile(datadir, 'test_data.mat'), 'ts_set');
-
 end
 
 fprintf('Training set: n = %d\n', sum(tr_set));

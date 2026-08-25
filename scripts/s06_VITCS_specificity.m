@@ -26,7 +26,6 @@ clear; clc;
 
 %% User-defined paths (TO EDIT)
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as previous scripts
-basedir = '/Users/acalvet/Repositories/neuroPENlab/VITCS';
 datadir = fullfile(basedir, 'data');   % <-- if necessary, EDIT THIS
 sigdir  = fullfile(basedir, 'results', 'VITCS_development');
 savedir = fullfile(basedir, 'results', 'VITCS_specificity');
@@ -40,8 +39,8 @@ metrics = {'dot_product', 'cosine_similarity'};
 VITCS_sig = fmri_data(fullfile(sigdir, 'VITCS_unthresholded_10foldCV.nii'), maskdir);
 
 %% Results table (both datasets x both metrics)
-row_names = {'MID: CueGain vs. CueLoss (dot product)', 'MID: CueGain vs. CueLoss (cosine similarity)', ...
-             'HCP-YA: Reward vs. punishment (dot product)', 'HCP-YA: Reward vs. punishment (cosine similarity)'};
+row_names = {'CueGainVSCueLoss_dotproduct', 'CueGainVSCueLoss_cosine', ...
+             'RewardVSpunishment_dotproduct', 'RewardVSpunishment_cosine'};
 res_specificity = array2table(nan(4, 5), ...
     'VariableNames', {'accuracy', 'sensitivity', 'specificity', 'p-value', 'cohens_d'});
 res_specificity.Properties.RowNames = row_names;
@@ -94,8 +93,8 @@ end
 hcp_scores_path = '<PATH_TO_HCP_VITCS_SCORES>'; % <-- EDIT THIS, e.g. fullfile(datadir, 'VITCS_scores_HCP.mat')
 VITCS_scores = load(hcp_scores_path).VITCS_scores;
 
-reward_v_punish = VITCS_scores.condition_scores{1};          % [:,1]=reward, [:,2]=punish; dot product
-reward_v_punish_cos = VITCS_scores.condition_scores_cosine{1}; % same, cosine similarity
+reward_v_punish = VITCS_scores.condition_scores{2};          % [:,1]=reward, [:,2]=punish; dot product
+reward_v_punish_cos = VITCS_scores.condition_scores_cosine{2}; % same, cosine similarity
 
 hcp_data = {reward_v_punish, reward_v_punish_cos};
 

@@ -2,7 +2,7 @@ function run_bootstrap_feature_stability(basedir, CSp_paths, CSm_paths, output_d
 %   Bootstrap feature-stability analysis for a VITCS-family model.
 %   Identify brain regions that most reliably contribute to classification.
 %
-%   RUN_VITCS_BOOTSTRAP(basedir, CSp_file, CSm_file, output_dir)
+%   RUN_BOOTSTRAP_FEATURE_STABILITY(basedir, CSp_paths, CSm_paths, output_dir)
 %
 %   Shared bootstrap routine used for the main VITCS model and the
 %   VITCS-early / VITCS-late variants (Supplementary Text, "SVM
@@ -45,6 +45,9 @@ training_data.Y = [ones(sum(tr_set), 1); -ones(sum(tr_set), 1)];
 %% Bootstrap resampling (5,000 samples) 
 [~, stats_boot] = predict(training_data, 'algorithm_name', 'cv_svm', 'nfolds', 1, ...
     'C', 1, 'error_type', 'mcr', 'bootweights', 'bootsamples', 5000);
+
+% Save stats_boot
+save(fullfile(output_dir, 'stats_bootstrap.mat'), 'stats_boot');
 
 %% Threshold the bootstrapped weight map 
 boot_fdr05  = threshold(stats_boot.weight_obj, .05,  'fdr', 'mask', maskdir);
