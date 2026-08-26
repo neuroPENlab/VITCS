@@ -63,19 +63,52 @@ All code lives under `scripts/`; `figures/` and `results/` hold only what the co
 
 ## Requirements
 
-**MATLAB** (developed with R2021b or later)
+**MATLAB** (developed and tested on R2024a, macOS)
 - Statistics and Machine Learning Toolbox
 - [CANlab Core Tools](https://github.com/canlab/CanlabCore) (`fmri_data`, `predict`, `roc_plot`, `canlab_pattern_similarity`, `threshold`, `write`,
   `resample_space`, `load_image_set`, `correlation`)
 - [CANlab Mediation Toolbox](https://github.com/canlab/MediationToolbox) (`mediation.m`)
 - Spider Toolbox (SVM backend used by CANlab's `predict`)
 
-**Python** (developed with Python 3.9+)
+**Python** (developed with Python 3.13.9, macOS)
 - `pandas`, `numpy`, `scipy`, `scikit-learn`, `pingouin`, `matplotlib`, `seaborn`, `wordcloud`
 
 **Other tools** (figure generation only)
-- [FSL](https://fsl.fmrib.ox.ac.uk/) (`fslmaths`, `fslstats`, `cluster`) for `fig_1_process_reliable_anatomy.sh` and `fig_2_cluster_prunning.sh`
-- [MRIcroGL](https://www.nitrc.org/projects/mricrogl) for the `*_mricrogl.py` brain-rendering scripts
+- [FSL 6.0.7.18](https://fsl.fmrib.ox.ac.uk/) (`fslmaths`, `fslstats`, `cluster`) for `fig_1_process_reliable_anatomy.sh` and `fig_2_cluster_prunning.sh`
+- [MRIcroGL 15.7.4](https://www.nitrc.org/projects/mricrogl) for the `*_mricrogl.py` brain-rendering scripts
+
+**Hardware**
+No non-standard hardware is required; all analyses were run on a standard desktop/laptop computer (no GPU needed).
+
+---
+
+## Installation
+
+1. **Clone this repository.**
+   ```bash
+   git clone https://github.com/neuroPENlab/VITCS.git
+   cd VITCS
+   ```
+
+2. **Set up MATLAB dependencies.** Install the following and add them to your MATLAB path (`addpath(genpath(...))`), in addition to this repository's own `utils/` folder (already added at the top of each `sNN_` script):
+   - [CANlab Core Tools](https://github.com/canlab/CanlabCore)
+   - [CANlab Mediation Toolbox](https://github.com/canlab/MediationToolbox)
+   - Spider Toolbox
+   
+   No `mex`/compilation step is required for any of the above; adding them to the path is sufficient.
+
+3. **Set up the Python environment.** A `requirements.txt` is provided:
+   ```bash
+   python3 -m venv vitcs_env
+   source vitcs_env/bin/activate      # Windows: vitcs_env\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+4. **Optional, figure-generation only:** install [FSL](https://fsl.fmrib.ox.ac.uk/fsl/docs/#/install/index) and [MRIcroGL](https://www.nitrc.org/projects/mricrogl) following their own installation instructions. These are only needed for the `fig_*`/`figsup_*` scripts, not for the main `sNN_` analysis pipeline.
+
+5. **Edit the path placeholders.** Every script has one or more `<PATH_TO_...>` variables near the top, marked `% <-- EDIT THIS` (MATLAB) or `# <-- EDIT THIS` (Python). These must point to your local copies of the data described below before running anything (see "Data").
+
+**Typical install time:** ~15–20 minutes on a standard desktop/laptop, excluding the time to install the third-party toolboxes/tools in steps 2 and 4 (which depend on whether they are already available on your system).
 
 ---
 
