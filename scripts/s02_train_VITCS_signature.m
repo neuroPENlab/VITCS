@@ -36,4 +36,5 @@ CSm_paths = fullfile(contrastdir, list_subj, contrast_subpath, '<CS-_contrast_na
 %% Train the main VITCS model (all acquisition trials)
 % Run VITCS training with sensitivity analysis and predefined folds for the
 % 10-fold CV, to define new ones use 'new_10fold_CV', true. 
-run_signature_training(basedir, CSp_paths, CSm_paths, savedir, 'run_sensitivity_analysis', true)
+run_signature_training(basedir, CSp_paths, CSm_paths, savedir, 'VITCS', ...
+    'run_sensitivity_analysis', true)

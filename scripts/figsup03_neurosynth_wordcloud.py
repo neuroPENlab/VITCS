@@ -3,6 +3,11 @@
 """
 figsup03_neurosynth_wordcloud.py
 @author: Angels Calvet-Mirabent
+
+NOTE: the underlying anatomical/functional term decoding (the Excel loaded below) was generated 
+manually using the NeuroSynth website (neurosynth.org), - see the Supplementary Text, "Extraction 
+of anatomical and functional terms using NeuroSynth", for the full procedure. This script only 
+takes that already-decoded Excel and renders it as a word cloud image.
 """
 from os.path import join
 import pandas as pd
@@ -22,8 +27,8 @@ wc = WordCloud(
 basedir = '<PATH_TO_PROJECT>'  # <-- EDIT THIS, same as other scripts
 
 figdir = join(basedir, 'figures')
-path_excel = '<PATH_TO_NEUROSYNTH_EXCEL>'  # <-- EDIT THIS, same as other scripts
-excel = pd.read_excel(path_excel, sheet_name='NEGATIVE_ABS') # ALL POSITIVE NEGATIVE_ABS NEGATIVE
+path_excel = '<PATH_TO_NEUROSYNTH_EXCEL>'  # <-- EDIT THIS
+excel = pd.read_excel(path_excel, sheet_name='ALL')
 
 # Generate the word cloud ANATOMIC from the text data
 text_anat = excel.loc[:,['Anatomic','Correlation_S']].set_index('Anatomic').to_dict()['Correlation_S']

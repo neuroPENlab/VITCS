@@ -1,4 +1,4 @@
-function run_signature_training(basedir, CSp_paths, CSm_paths, output_dir, varargin)
+function run_signature_training(basedir, CSp_paths, CSm_paths, output_dir, model_label, varargin)
 %   Train a VITCS-family SVM signature with 10-fold CV.
 %
 %   RUN_SIGNATURE_TRAINING(basedir, CSp_paths, CSm_paths, output_dir)
@@ -16,10 +16,12 @@ function run_signature_training(basedir, CSp_paths, CSm_paths, output_dir, varar
 %   the input contrast images differ.
 %
 %   INPUTS
-%       basedir     - project root (same BASEDIR used by the caller)
+%       basedir      - project root (same BASEDIR used by the caller)
 %       CSp_paths    - cell array with all CS+ contrast paths
 %       CSm_paths    - cell array with all CS- contrast paths
-%       output_dir  - directory to write this model's outputs to
+%       output_dir   - directory to write this model's outputs to
+%       model_label  - short string used in filenames, e.g. 'VITCS',
+%                       'VITCS_early', 'VITCS_late'
 %
 %   NAME-VALUE ARGS
 %       'new_10fold_CV' (default false) - train de SVM with new folds. 
@@ -48,6 +50,7 @@ if ~exist(output_dir, 'dir'); mkdir(output_dir); end
 %% Paths
 datadir = fullfile(basedir, 'data');
 maskdir = fullfile(datadir, 'brainmask.nii');
+path_10fold_CV = fullfile(datadir, ['10fold_CV_' model_label '.mat']);
 
 %% Load training data and 10-fold CV assignment (if false)
 tr_set = load(fullfile(datadir, 'training_data.mat')).tr_set;
@@ -59,9 +62,9 @@ training_data.Y = [ones(sum(tr_set), 1); -ones(sum(tr_set), 1)];
 if new_10fold_CV
     subject_folds = crossvalind('Kfold', n_tr_set, 10);
     sample_folds = [subject_folds, subject_folds];
-    save(fullfile(output_dir, '10fold_CV.mat'), 'sample_folds');
+    save(path_10fold_CV, 'sample_folds');
 else
-    sample_folds = load(fullfile(output_dir, '10fold_CV.mat')).sample_folds;
+    sample_folds = load(path_10fold_CV).sample_folds;
 end
 
 %% Train (C = 1) and save the unthresholded weight map

@@ -3,7 +3,7 @@
 % Plot pattern expression (VITCS dot product) for CS+ vs. CS- in the
 % Test Set, separately for the acquisition and reversal contrasts.
 %
-% Requires s03_1_validation_test_set.m to have been run first.
+% Requires s03_1_validation_VITCS_test_set.m to have been run first.
 %
 % For the VITCS-early and VITCS-late ROC plot, change the savedir to point
 % to its validation_test_set_results.mat folder respectively. 

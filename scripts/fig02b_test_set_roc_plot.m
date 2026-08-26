@@ -4,7 +4,7 @@
 % Acquisition, Test set Reversal) together, as in the manuscript
 % figure.
 %
-% Requires s03_1_validation_test_set.m to have been run first.
+% Requires s03_1_validation_VITCS_test_set.m to have been run first.
 %
 % Dependencies: CANlab Core Tools (roc_plot)
 % -------------------------------------------------------------------
@@ -21,9 +21,9 @@ R = load(fullfile(savedir, 'validation_test_set_results.mat'));
 
 %% Plot
 % Pastel colors
-col1 = [239,  83,  80, 255] / 255;  % coral (Training set, CV)
-col2 = [ 63,  81, 181, 255] / 255;  % indigo (Test set, Acquisition)
-col3 = [ 38, 166, 154, 255] / 255;  % teal (Test set, Reversal)
+col1 = [239,  83,  80] / 255;  % coral (Training set, CV)
+col2 = [ 63,  81, 181] / 255;  % indigo (Test set, Acquisition)
+col3 = [ 38, 166, 154] / 255;  % teal (Test set, Reversal)
 
 figure;
 r1 = roc_plot(R.CV_roc_inputs.xval_dist_C1, R.CV_roc_inputs.outcome_C1, ...

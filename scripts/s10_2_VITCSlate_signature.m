@@ -43,7 +43,7 @@ CSm_late_paths = fullfile(contrastdir, list_subj, contrast_subpath, '<CS-late_co
 %% Train the VITCS-late (last five acquisition trials)
 % Run training with predefined folds for the 10-fold CV, 
 % to define new ones use 'new_10fold_CV', true. 
-run_signature_training(basedir, CSp_late_paths, CSm_late_paths, savedir)
+run_signature_training(basedir, CSp_late_paths, CSm_late_paths, 'VITCS-late', savedir)
 
 %% Evaluate VITCS-late model on the Test Set
 contrast_files_test = {{'<name_CS+_file>'; '<name_CS-_file>'}, ...

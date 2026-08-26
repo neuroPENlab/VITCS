@@ -43,7 +43,7 @@ CSm_early_paths = fullfile(contrastdir, list_subj, contrast_subpath, '<CS-early_
 %% Train the VITCS-early (first five acquisition trials)
 % Run training with predefined folds for the 10-fold CV, 
 % to define new ones use 'new_10fold_CV', true. 
-run_signature_training(basedir, CSp_early_paths, CSm_early_paths, savedir)
+run_signature_training(basedir, CSp_early_paths, CSm_early_paths, 'VITCS-early', savedir)
 
 %% Evaluate VITCS-early model on the Test Set
 contrast_files_test = {{'<name_CS+_file>'; '<name_CS-_file>'}, ...

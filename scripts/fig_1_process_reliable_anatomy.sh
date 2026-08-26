@@ -2,10 +2,10 @@
 # Separate positive and negative clusters and binarize them
 #
 # Usage:
-#   ./process_reliable_anatomy.sh <input_image> <output_name_positive> <output_name_negative>
+#   ./fig_1_process_reliable_anatomy.sh  <input_image>  <output_name_positive>  <output_name_negative>
 #
 # Example:
-#   ./process_reliable_anatomy.sh \
+#   ./fig_1_process_reliable_anatomy.sh \
 #       path/to/clusterimage.nii.gz \
 #       path/to/clusterimage_pos_bin.nii.gz \
 #       path/to/clusterimage_neg_bin.nii.gz

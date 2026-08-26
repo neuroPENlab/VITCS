@@ -1,10 +1,25 @@
 %% fig04_existing_signatures_accuracy.m
 % -------------------------------------------------------------------
-% ........
+% Plot forced-choice classification accuracy (+- SE) of VITCS against
+% previously published affective/threat-related brain signatures, with
+% significance brackets from the pairwise McNemar comparisons, as in
+% the manuscript figure.
 %
-% Requires s09_comparison_existing_signatures.m to have been run first.
+% From Results: "the VITCS significantly outperformed all existing
+% signatures, even under conservative correction for multiple
+% comparisons (McNemar Pairwise, p<0.01; Fig. 4). Differences among
+% several previously published threat-, fear- and pain-related brain
+% signatures were not statistically significant (Supplementary Table 5)."
 %
-% Dependencies:
+% Significance brackets (dif_sig pairs, and which are marked '*', '***',
+% or 'ns') were set manually from the FDR-corrected pairwise p-values in
+% s09's pairwise_p_fdr_corrected.csv; if s09 is re-run and the signature 
+% results change, update dif_sig and the significance annotations accordingly.
+%
+% Requires s09_comparison_existing_signatures.m to have been run first
+% (reads accuracy_all_signatures.csv).
+%
+% Dependencies: none (base MATLAB plotting only)
 % -------------------------------------------------------------------
 clear; clc;
 
