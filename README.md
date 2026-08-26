@@ -172,10 +172,10 @@ Four scripts — `s04_1_generalization_ENIGMA.m`, `s04_2_generalization_ENIGMA_a
 
 | Script | `SIGNATURE` value |
 |---|---|
-| `s04_1_generalization_ENIGMA.m` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
-| `s04_2_generalization_ENIGMA_analysis.py` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
-| `s07_mediation_analysis.m` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
-| `s08_anxiety_risk_analysis.py` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
+| `s04_1_generalization_ENIGMA.m` | `'Reddan-Threat'` and `'Liu-SUITAS'` |
+| `s04_2_generalization_ENIGMA_analysis.py` | `'Reddan-Threat'` and `'Liu-SUITAS'` |
+| `s07_mediation_analysis.m` | `'Reddan-Threat'` and `'Liu-SUITAS'` |
+| `s08_anxiety_risk_analysis.py` | `'Reddan-Threat'` and `'Liu-SUITAS'` |
 
 **VITCS-early** — prerequisite: `s10_1_VITCSearly_signature.m`
 
