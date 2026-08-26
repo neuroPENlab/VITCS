@@ -130,8 +130,8 @@ patexp_used.to_excel(join(savedir, col_name + '_patexp.xlsx'))
 # Sanity check: continuous correlation between anxiety-risk score and VITCS pattern expression
 r_csplus = pearsonr(patexp_used[col_name], patexp_used[pat_exp_col[0]])
 r_csminus = pearsonr(patexp_used[col_name], patexp_used[pat_exp_col[1]])
-print(f"anxiety_risk vs VITCS_CS+: r={r_csplus[0]:.3f}, p={r_csplus[1]:.4f}")
-print(f"anxiety_risk vs VITCS_CS-: r={r_csminus[0]:.3f}, p={r_csminus[1]:.4f}")
+print(f"Pearson correlation anxiety_risk vs {SIGNATURE} CS+: r={r_csplus[0]:.3f}, p={r_csplus[1]:.4f}")
+print(f"Pearson correlation anxiety_risk vs {SIGNATURE} CS-: r={r_csminus[0]:.3f}, p={r_csminus[1]:.4f}")
 
 #%% Split into upper/lower tertiles (high-risk n=57, low-risk n=57) ----------------
 patexp_used['IQ'] = np.zeros(patexp_used.shape[0])
