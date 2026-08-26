@@ -13,6 +13,12 @@
 % between VITCS pattern expression and the outputs of each benchmark
 % signature during CS+ trials across participants [...] (Table 5)."
 %
+% To RUN NEXT STEPS (ENIGMA, mediation and anxiety risk analyses):
+%   (1) s04_1_generalization_ENIGMA.m and s04_2_generalization_ENIGMA_analysis.py
+%       with SIGNATURE = 'Reddan-Threat' and = 'Liu-SUITAS'
+%   (2) s07_mediation_analysis.m with SIGNATURE = 'Reddan-Threat' and = 'Liu-SUITAS'
+%   (3) s08_anxiety_risk_analysis.py with SIGNATURE = 'Reddan-Threat' and = 'Liu-SUITAS'
+%
 % Dependencies: CANlab Core Tools (fmri_data, canlab_pattern_similarity,
 %               load_image_set, roc_plot, correlation),
 %               Statistics and Machine Learning Toolbox (binocdf, mafdr)

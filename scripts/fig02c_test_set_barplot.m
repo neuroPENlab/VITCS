@@ -8,11 +8,16 @@
 % For the VITCS-early and VITCS-late ROC plot, change the savedir to point
 % to its validation_test_set_results.mat folder respectively. 
 %
-% Dependencies: utils/barplot_columns_angels.m (modified from CANlab's
-%               barplot_columns.m - see file header for license note)
+% Dependencies: barplot_columns_modified.m - a locally modified copy of
+%               CANlab's barplot_columns.m, kept alongside the original
+%               in your CANlab Core Tools installation. See
+%               scripts/barplot_columns_modified_MODIFICATION.md for
+%               exact, step-by-step instructions to create it yourself
+%               before running this script. As long as your CANlab
+%               installation is on the MATLAB path (see Installation in
+%               the main README), no extra addpath call is needed here.
 % -------------------------------------------------------------------
 clear; clc;
-addpath('utils');
 
 %% User-defined paths (TO EDIT)
 basedir = '<PATH_TO_PROJECT>';   % <-- EDIT THIS, same as s01_train_test_split.m
@@ -32,7 +37,7 @@ for C = 1:length(R.contrast_names)
     contrast_name = R.contrast_names{C};
 
     figure;
-    barplot_columns_angels(R.res_pat_exp{R.subj_ts, contrast_name}, 'nofigure', ...
+    barplot_columns_modified(R.res_pat_exp{R.subj_ts, contrast_name}, 'nofigure', ...
         'colors', colors, 'names', contrast_name, 'dolines');
     set(gca, 'FontSize', 34);
     ylabel('Pattern expression');

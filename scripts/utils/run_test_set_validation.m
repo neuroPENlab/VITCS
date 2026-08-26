@@ -2,7 +2,7 @@ function results = run_test_set_validation(basedir, contrastdir, contrast_subpat
     contrast_files, contrast_names, sig_path, roc_inputs_path, output_dir, model_label)
 %   Evaluate a VITCS-family signature on the Test Set.
 %
-%   results = RUN_VITCS_TEST_VALIDATION(basedir, contrastdir, contrast_subpath, ...
+%   results = RUN_TEST_SET_VALIDATION(basedir, contrastdir, contrast_subpath, ...
 %   contrast_files, contrast_names, sig_path, roc_inputs_path, output_dir, model_label)
 %
 %   INPUTS
@@ -16,7 +16,7 @@ function results = run_test_set_validation(basedir, contrastdir, contrast_subpat
 %                          to compute pattern expression for, e.g. {'CS+'; 'CS-'}
 %       contrast_names   - cell array of column names (same length/order as 
 %                          contrast_files), e.g. {'CS+', 'CS-'}
-%       sigdir           - path to this model's unthresholded signature .nii 
+%       sig_path         - path to this model's unthresholded signature .nii 
 %                          (from run_signature_training.m)
 %       roc_inputs_path  - path to this model's VITCS_roc_inputs.mat
 %                          (10-fold CV distances, also from

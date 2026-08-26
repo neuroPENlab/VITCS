@@ -34,19 +34,19 @@ datadir = join(basedir, 'data')
 questionnaire_path = '<PATH_TO_QUESTIONNAIRE_SCORES>'    # <-- EDIT THIS: table with STAI_T_A and SCSR_P_A columns per participant
 
 # ---  Which signature to run mediation for ----------------------------------
-SIGNATURE = "VITCS" # <-- EDIT THIS: 'VITCS' | 'Reddan_Threat' | 'Liu_SUITAS' | 'VITCS_early' | 'VITCS_late'
+SIGNATURE = "VITCS" # <-- EDIT THIS: 'VITCS' | 'Reddan-Threat' | 'Liu-SUITAS' | 'VITCS_early' | 'VITCS_late'
 
 if SIGNATURE == "VITCS":
     pat_exp_path = join(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_xval.xlsx'); # from 04b + 04d
     pat_exp_col = ['CS+', 'CS-'];
     savedir = join(basedir, 'results', 'VITCS_anxiety_risk');
-elif SIGNATURE == "Reddan_Threat":
-    pat_exp_path = join(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_all_signatures.xlsx'); # from 04d
-    pat_exp_col = ['Reddan_Threat_CS+', 'Reddan_Threat_CS-'];
+elif SIGNATURE == "Reddan-Threat":
+    pat_exp_path = join(basedir, 'results', 'comparison_existing_signatures', 'pat_exp_full_sample_all_signatures.xlsx'); # from 04d
+    pat_exp_col = ['Reddan-Threat_CS+', 'Reddan-Threat_CS-'];
     savedir = join(basedir, 'results', 'comparison_existing_signatures');
-elif SIGNATURE == "Liu_SUITAS":
-    pat_exp_path = join(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_all_signatures.xlsx'); # from 04d
-    pat_exp_col = ['Liu_SUITAS_CS+', 'Liu_SUITAS_CS-'];
+elif SIGNATURE == "Liu-SUITAS":
+    pat_exp_path = join(basedir, 'results', 'comparison_existing_signatures', 'pat_exp_full_sample_all_signatures.xlsx'); # from 04d
+    pat_exp_col = ['Liu-SUITAS_CS+', 'Liu-SUITAS_CS-'];
     savedir = join(basedir, 'results', 'comparison_existing_signatures');
 elif SIGNATURE == "VITCS_early":
     pat_exp_path = join(basedir, 'results', 'VITCS_early_results', 'pat_exp_full_sample_xval.xlsx'); # from 04c

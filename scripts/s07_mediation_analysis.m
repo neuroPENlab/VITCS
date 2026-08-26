@@ -41,20 +41,20 @@ scr_path = '<PATH_TO_SCR_DATA>';               % <-- EDIT THIS: SCR_detrend.xlsx
 subj_rat_path = '<PATH_TO_SUBJECTIVE_RATINGS_DATA>'; % <-- EDIT THIS: Subjective_ratings_condrev.xlsx equivalent
 
 %% Which signature to run mediation for
-SIGNATURE = 'VITCS'; % <-- EDIT THIS: 'VITCS' | 'Reddan_Threat' | 'Liu_SUITAS' | 'VITCS_early' | 'VITCS_late'
+SIGNATURE = 'VITCS'; % <-- EDIT THIS: 'VITCS' | 'Reddan-Threat' | 'Liu-SUITAS' | 'VITCS_early' | 'VITCS_late'
 
 switch SIGNATURE
     case 'VITCS'
         pat_exp_path = fullfile(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_xval.xlsx'); % from 04b + 04d
         pat_exp_col = 'CS+';
         savedir = fullfile(basedir, 'results', 'VITCS_mediation');
-    case 'Reddan_Threat'
-        pat_exp_path = fullfile(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_all_signatures.xlsx'); % from 04d
-        pat_exp_col = 'Reddan_Threat_CS+';
+    case 'Reddan-Threat'
+        pat_exp_path = fullfile(basedir, 'results', 'comparison_existing_signatures', 'pat_exp_full_sample_all_signatures.xlsx'); % from 04d
+        pat_exp_col = 'Reddan-Threat_CS+';
         savedir = fullfile(basedir, 'results', 'comparison_existing_signatures');
-    case 'Liu_SUITAS'
-        pat_exp_path = fullfile(basedir, 'results', 'VITCS_development', 'pat_exp_full_sample_all_signatures.xlsx'); % from 04d
-        pat_exp_col = 'Liu_SUITAS_CS+';
+    case 'Liu-SUITAS'
+        pat_exp_path = fullfile(basedir, 'results', 'comparison_existing_signatures', 'pat_exp_full_sample_all_signatures.xlsx'); % from 04d
+        pat_exp_col = 'Liu-SUITAS_CS+';
         savedir = fullfile(basedir, 'results', 'comparison_existing_signatures');
     case 'VITCS_early'
         pat_exp_path = fullfile(basedir, 'results', 'VITCS_early_results', 'pat_exp_full_sample_xval.xlsx'); % from 04c

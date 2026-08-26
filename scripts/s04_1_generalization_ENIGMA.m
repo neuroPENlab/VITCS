@@ -41,17 +41,17 @@ excel = readtable(excel_path, 'VariableNamingRule', 'preserve');
 excel.Properties.RowNames = cellstr(num2str(excel.Var1));
 
 %% Which signature to run mediation for
-SIGNATURE = 'VITCS'; % <-- EDIT THIS: 'VITCS' | 'Reddan_Threat' | 'Liu_SUITAS' | 'VITCS_early' | 'VITCS_late'
+SIGNATURE = 'VITCS'; % <-- EDIT THIS: 'VITCS' | 'Reddan-Threat' | 'Liu-SUITAS' | 'VITCS_early' | 'VITCS_late'
 
 switch SIGNATURE
     case 'VITCS'
         sig = fmri_data(fullfile(basedir, 'results', 'VITCS_development', ...
             'VITCS_unthresholded_10foldCV.nii'), maskdir);
         savedir = fullfile(basedir, 'results', 'VITCS_ENIGMA_generalization');
-    case 'Reddan_Threat'
+    case 'Reddan-Threat'
         sig = load_image_set('csplus');
         savedir = fullfile(basedir, 'results', 'comparison_existing_signatures');
-    case 'Liu_SUITAS'
+    case 'Liu-SUITAS'
         sig = fmri_data('<PATH_TO_SUITAS_SIGNATURE>', maskdir); % <-- EDIT THIS
         savedir = fullfile(basedir, 'results', 'comparison_existing_signatures');
     case 'VITCS_early'

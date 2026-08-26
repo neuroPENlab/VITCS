@@ -1,7 +1,7 @@
 function run_signature_training(basedir, CSp_paths, CSm_paths, output_dir, model_label, varargin)
 %   Train a VITCS-family SVM signature with 10-fold CV.
 %
-%   RUN_SIGNATURE_TRAINING(basedir, CSp_paths, CSm_paths, output_dir)
+%   RUN_SIGNATURE_TRAINING(basedir, CSp_paths, CSm_paths, output_dir, model_label)
 %   RUN_SIGNATURE_TRAINING(..., 'run_sensitivity_analysis', true)
 %
 %   Shared training routine used for the main VITCS model (all
@@ -24,9 +24,9 @@ function run_signature_training(basedir, CSp_paths, CSm_paths, output_dir, model
 %                       'VITCS_early', 'VITCS_late'
 %
 %   NAME-VALUE ARGS
-%       'new_10fold_CV' (default false) - train de SVM with new folds. 
-%       Only set to true for new analysis. If false, expects 10fold_CV.mat 
-%       to already exist under output_dir/.
+%       'new_10fold_CV' (default false) - train the SVM with new folds. 
+%       Only set to true for new analysis. If false, expects 
+%       10fold_CV_'model_label'.mat to already exist under datadir/.
 %       'run_sensitivity_analysis' (default false) - also run the C =
 %           0.01/0.1/10 regularization sensitivity analysis. Only set
 %           to true for the main VITCS model (Supplementary Table 2);

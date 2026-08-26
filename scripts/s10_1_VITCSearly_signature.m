@@ -21,6 +21,12 @@
 %   (3) out-of-fold pattern expression across the full sample, and
 %   (4) bootstrap feature-stability analysis.
 %
+% To run ENIGMA generalization, mediation and anxiety risk analyses:
+%   (1) s04_1_generalization_ENIGMA.m and s04_2_generalization_ENIGMA_analysis.py
+%       with SIGNATURE = 'VITCS_early'
+%   (2) s07_mediation_analysis.m with SIGNATURE = 'VITCS_early'
+%   (3) s08_anxiety_risk_analysis.py with SIGNATURE = 'VITCS_early'
+%
 % Dependencies: CANlab Core Tools (fmri_data, predict, roc_plot,
 %               canlab_pattern_similarity), Spider Toolbox
 % -------------------------------------------------------------------
@@ -37,37 +43,35 @@ contdirs = dir(contrastdir);
 list_subj = {contdirs([contdirs.isdir]).name};
 list_subj = list_subj(~ismember(list_subj, {'.', '..'}));
 
+% For VITCS-early development and stability analysis
 CSp_early_paths = fullfile(contrastdir, list_subj, contrast_subpath, '<CS+early_contrast_name>.nii'); % <-- EDIT contrast name
 CSm_early_paths = fullfile(contrastdir, list_subj, contrast_subpath, '<CS-early_contrast_name>.nii'); % <-- EDIT contrast name
 
-%% Train the VITCS-early (first five acquisition trials)
-% Run training with predefined folds for the 10-fold CV, 
-% to define new ones use 'new_10fold_CV', true. 
-run_signature_training(basedir, CSp_early_paths, CSm_early_paths, 'VITCS-early', savedir)
-
-%% Evaluate VITCS-early model on the Test Set
+% For VITCS-early validation
 contrast_files_test = {{'<name_CS+_file>'; '<name_CS-_file>'}, ...
     {'<name_newCS+_file>'; '<name_newCS-_file>'}};     % <-- EDIT THIS
 contrast_names_test = {{'CS+', 'CS-'}, {'newCS+', 'newCS-'}};
 % 'CS+'/'CS-'       -> acquisition (Conditioning) contrasts
 % 'newCS+'/'newCS-' -> reversal contrasts
 
+% For pattern expression calculation
+contrast_files = {'<name_CS+_file>'; '<name_CS-_file>'};     % <-- EDIT THIS
+contrast_names = {'CS+', 'CS-'};
+
+%% Train the VITCS-early (first five acquisition trials)
+% Run training with predefined folds for the 10-fold CV, 
+% to define new ones use 'new_10fold_CV', true. 
+run_signature_training(basedir, CSp_early_paths, CSm_early_paths, savedir, 'VITCS-early')
+
+%% Evaluate VITCS-early model on the Test Set
 res_VITCSearly  = run_test_set_validation(basedir, contrastdir, contrast_subpath, contrast_files_test, ...
     contrast_names_test, fullfile(savedir, 'VITCS_unthresholded_10foldCV.nii'), ...
     fullfile(savedir, 'VITCS_roc_inputs.mat'), savedir, 'VITCS-early');
 
 %% VITCS-early pattern expression for CS+ and CS- across the full sample
-contrast_files = {'<name_CS+_file>'; '<name_CS-_file>'};     % <-- EDIT THIS
-contrast_names = {'CS+', 'CS-'};
 run_full_sample_xval_pattern_expression(basedir, contrastdir, contrast_subpath, ...
     contrast_files, contrast_names, savedir, savedir)
 
 %% Bootstrap the VITCS-early model (using the training set)
 run_bootstrap_feature_stability(basedir, CSp_early_paths, CSm_early_paths, ...
     fullfile(savedir, 'reliable_anatomy'))
-
-%% To run ENIGMA generalization, mediation and anxiety risk analyses
-%   (1) s04_1_generalization_ENIGMA.m and s04_2_generalization_ENIGMA_analysis.py
-%       with SIGNATURE = 'VITCS_early'
-%   (2) s07_mediation_analysis.m with SIGNATURE = 'VITCS_early'
-%   (3) s08_anxiety_risk_analysis.py with SIGNATURE = 'VITCS_early'

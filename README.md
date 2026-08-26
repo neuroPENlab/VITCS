@@ -19,6 +19,8 @@ This repository contains the MATLAB and Python code used to train, validate, and
 │   └── 10fold_CV_VITCS-late.mat
 │
 ├── scripts/
+│   ├── barplot_columns_modified_MODIFICATION.md (barplot_columns_modified.m itself is NOT included - see below)
+│   │
 │   ├── s01_train_test_split.m
 │   ├── s02_train_VITCS_signature.m
 │   ├── s03_1_validation_VITCS_test_set.m
@@ -58,6 +60,9 @@ Scripts prefixed `sNN_` are the main analysis pipeline, run in numerical order. 
 All code lives under `scripts/`; `figures/` and `results/` hold only what the code *generates* - nothing under either folder needs to be tracked as source.
 
 `data/` contains the fixed inputs the pipeline reads as a starting point (brain mask, Training/Test split, 10-fold CV assignments) - as opposed to `results/`, which holds everything the scripts *generate*. See "Notes on reproducibility" below for what's included here and why.
+
+**A note on `barplot_columns_modified.m`:** `fig02c_test_set_barplot.m` depends on a locally modified copy of CANlab's `barplot_columns.m`, meant to live alongside the original inside your CANlab Core Tools installation. To avoid redistributing a derivative of third-party licensed code, this
+modified file is **not included** here. `scripts/barplot_columns_modified_MODIFICATION.md` gives exact, step-by-step instructions so you can recreate it yourself before running `fig02c_test_set_barplot.m`.
 
 ---
 
@@ -137,12 +142,12 @@ To reproduce the published Training/Test split without access to the raw data, `
 Run in this order (after editing the path placeholders in each script):
 
 | Step | Script | What it does |
-|---|---|---|---|
+|---|---|---|
 | 1 | `s01_train_test_split.m` | Stratified 80/20 Training/Test split (by STAI-T) |
 | 2 | `s02_train_VITCS_signature.m` | Train VITCS with 10-fold CV; SVM-C sensitivity analysis |
 | 3 | `s03_1_validation_VITCS_test_set.m` | Validate VITCS on the held-out Test Set (acquisition + reversal) |
 | 4 | `s03_2_full_sample_xval_pattern_expression.m` | Out-of-fold pattern expression, full sample (N=172) |
-| 5 | `s04_1_generalization_ENIGMA.m` + `s04_2_generalization_ENIGMA_analysis.py` | Pattern expression & accuracy across the 26 ENIGMA-Anxiety FC datasets |
+| 5 | `s04_1_generalization_ENIGMA.m` + `s04_2_generalization_ENIGMA_analysis.py`| Pattern expression & accuracy across the 26 ENIGMA-Anxiety FC datasets |
 | 6 | `s05_VITCS_bootstrap_feature_stability.m` | Bootstrap (5,000 resamples) + FDR-thresholded weight map |
 | 7 | `s06_VITCS_specificity.m` | Specificity vs. reward processing (MID task, HCP-YA) |
 | 8 | `s07_mediation_analysis.m` | SCR mediation of VITCS → subjective arousal/valence |
@@ -150,8 +155,46 @@ Run in this order (after editing the path placeholders in each script):
 | 10 | `s09_comparison_existing_signatures.m` | Benchmark vs. published signatures + shared variance |
 | 11 | `s10_1_VITCSearly_signature.m` / `s10_2_VITCSlate_signature.m` | Train/validate the stage-specific early/late variants |
 
-Steps 5, 7, 8, and 10 (`s04`, `s07`, `s08`, `s09`) are parametrized by a `SIGNATURE` variable at the top of the script (`'VITCS'`, `'VITCS_early'`,
-`'VITCS_late'`, `'Reddan_Threat'`, `'Liu_SUITAS'`) — re-run with a different value to repeat the analysis for each signature.
+### Re-running the signature-parametrized scripts
+
+Four scripts — `s04_1_generalization_ENIGMA.m`, `s04_2_generalization_ENIGMA_analysis.py`, `s07_mediation_analysis.m`, and `s08_anxiety_risk_analysis.py` — take a `SIGNATURE` variable at the top of the script and must be **re-run once per signature/model** below to reproduce every number reported in the manuscript. Each block must be run after its corresponding prerequisite step in the table above.
+
+**VITCS (main model)** — prerequisite: Step 2 (`s02_train_VITCS_signature.m` and `s03_2_full_sample_xval_pattern_expression.m`)
+
+| Script | `SIGNATURE` value |
+|---|---|
+| `s04_1_generalization_ENIGMA.m` | `'VITCS'` |
+| `s04_2_generalization_ENIGMA_analysis.py` | `'VITCS'` |
+| `s07_mediation_analysis.m` | `'VITCS'` |
+| `s08_anxiety_risk_analysis.py` | `'VITCS'` |
+
+**Comparison signatures** — prerequisite: Step 10 (`s09_comparison_existing_signatures.m`)
+
+| Script | `SIGNATURE` value |
+|---|---|
+| `s04_1_generalization_ENIGMA.m` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
+| `s04_2_generalization_ENIGMA_analysis.py` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
+| `s07_mediation_analysis.m` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
+| `s08_anxiety_risk_analysis.py` | `'Reddan_Threat'` and `'Liu_SUITAS'` |
+
+**VITCS-early** — prerequisite: `s10_1_VITCSearly_signature.m`
+
+| Script | `SIGNATURE` value |
+|---|---|
+| `s04_1_generalization_ENIGMA.m` | `'VITCS_early'` |
+| `s04_2_generalization_ENIGMA_analysis.py` | `'VITCS_early'` |
+| `s07_mediation_analysis.m` | `'VITCS_early'` |
+| `s08_anxiety_risk_analysis.py` | `'VITCS_early'` |
+
+**VITCS-late** — prerequisite: `s10_2_VITCSlate_signature.m`
+
+| Script | `SIGNATURE` value |
+|---|---|
+| `s04_1_generalization_ENIGMA.m` | `'VITCS_late'` |
+| `s04_2_generalization_ENIGMA_analysis.py` | `'VITCS_late'` |
+| `s07_mediation_analysis.m` | `'VITCS_late'` |
+| `s08_anxiety_risk_analysis.py` | `'VITCS_late'` |
+
 
 ### Figures
 

@@ -33,15 +33,15 @@ FINAL_DATASET_NUMS = [2, 9, 10, 12, 13, 14, 15, 18, 19, 22, 23, 24, 25, 26,
 assert len(FINAL_DATASET_NUMS) == 26, "Expected exactly 26 datasets (see Methods / Table 2)"
 
 # ---  Which signature to run mediation for ----------------------------------
-SIGNATURE = "VITCS" # <-- EDIT THIS: 'VITCS' | 'Reddan_Threat' | 'Liu_SUITAS' | 'VITCS_early' | 'VITCS_late'
+SIGNATURE = "VITCS" # <-- EDIT THIS: 'VITCS' | 'Reddan-Threat' | 'Liu-SUITAS' | 'VITCS_early' | 'VITCS_late'
 
 if SIGNATURE == "VITCS":
     pat_exp_path = join(basedir, 'results', 'VITCS_ENIGMA_generalization', 'pattern_expression_ENIGMA_' + SIGNATURE + '.xlsx'); # from 04b + 04d
     savedir = join(basedir, 'results', 'VITCS_ENIGMA_generalization');
-elif SIGNATURE == "Reddan_Threat":
+elif SIGNATURE == "Reddan-Threat":
     pat_exp_path = join(basedir, 'results', 'comparison_existing_signatures', 'pattern_expression_ENIGMA_' + SIGNATURE + '.xlsx'); # from 04d
     savedir = join(basedir, 'results', 'comparison_existing_signatures');
-elif SIGNATURE == "Liu_SUITAS":
+elif SIGNATURE == "Liu-SUITAS":
     pat_exp_path = join(basedir, 'results', 'comparison_existing_signatures', 'pattern_expression_ENIGMA_' + SIGNATURE + '.xlsx'); # from 04d
     savedir = join(basedir, 'results', 'comparison_existing_signatures');
 elif SIGNATURE == "VITCS_early":
@@ -87,7 +87,7 @@ for modality in data['us_modality'].unique():
 accuracy_rows.append(row)
  
 accuracy_table = pd.DataFrame(accuracy_rows).set_index('signature').T
-accuracy_table.to_csv(join(savedir, 'ENIGMA_accuracy_by_modality.csv'))
+accuracy_table.to_csv(join(savedir, 'ENIGMA_' + SIGNATURE + '_accuracy_by_modality.csv'))
 print(accuracy_table)
 
 if SIGNATURE == 'VITCS':
@@ -96,7 +96,7 @@ if SIGNATURE == 'VITCS':
         N=('VITCS', 'size'),
         VITCS_accuracy=('VITCS', lambda values: float((values > 0).mean()) * 100),
     )
-    dataset_summary.to_csv(join(savedir, 'ENIGMA_dataset_summary.csv'))
+    dataset_summary.to_csv(join(savedir, 'ENIGMA_' + SIGNATURE+ '_dataset_summary.csv'))
     print(dataset_summary)
 
 
