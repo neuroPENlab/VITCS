@@ -31,7 +31,6 @@ savedir = fullfile(basedir, 'results', 'VITCS_validation');   % <-- if necessary
 contrast_files = {'<name_CS+_file>'; '<name_CS-_file>'};     % <-- EDIT THIS
 contrast_names = {'CS+', 'CS-'};
 % 'CS+'/'CS-'       -> acquisition (Conditioning) contrasts
-% 'newCS+'/'newCS-' -> reversal contrasts
 
 %% Main VITCS model
 run_full_sample_xval_pattern_expression(basedir, contrastdir, contrast_subpath, ...
