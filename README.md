@@ -35,22 +35,25 @@ This repository contains the MATLAB and Python code used to train, validate, and
 │   ├── s10_1_VITCSearly_signature.m
 │   ├── s10_2_VITCSlate_signature.m
 │   │
-│   ├── fig_1_process_reliable_anatomy.sh
-│   ├── fig_2_cluster_prunning.sh
-│   ├── fig02a_reliable_anatomy_VITCS_mricrogl.py
+│   ├── fig02a_1_reliable_anatomy_VITCS_PREPROC.sh
+│   ├── fig02a_2_reliable_anatomy_VITCS_mricrogl.py
 │   ├── fig02b_test_set_roc_plot.m
 │   ├── fig02c_test_set_barplot.m
 │   ├── fig04_existing_signatures_accuracy.m
 │   ├── figsup03_neurosynth_wordcloud.py
 │   ├── figsup05_VITCS_vs_univariate_mricrogl.py
-│   ├── figsup06a_reliable_anatomy_VITCS_early_mricrogl.py
-│   └── figsup06d_reliable_anatomy_VITCS_late_mricrogl.py
+│   ├── figsup06a_1_reliable_anatomy_VITCS_early_PREPROC.sh
+│   ├── figsup06a_2_reliable_anatomy_VITCS_early_mricrogl.py
+│   ├── figsup06d_1_reliable_anatomy_VITCS_late_PREPROC.sh
+│   └── figsup06d_2_reliable_anatomy_VITCS_late_mricrogl.py
 │
 ├── utils/
 │   ├── run_signature_training.m
 │   ├── run_test_set_validation.m
 │   ├── run_full_sample_xval_pattern_expression.m
-│   └── run_bootstrap_feature_stability.m
+│   ├── run_bootstrap_feature_stability.m
+│   ├── process_reliable_anatomy.sh
+│   └── cluster_prunning.sh
 │
 └── figures/                  (output only - populated by running the fig_*/figsup_* scripts above; empty in this repository)
 ```
@@ -203,13 +206,13 @@ All figure scripts below live in `scripts/` alongside the analysis pipeline (see
 | Script | Figure |
 |---|---|
 | `fig_1_process_reliable_anatomy.sh`, `fig_2_cluster_prunning.sh` | FSL preprocessing (cluster separation, binarization, pruning) of the bootstrap-thresholded weight maps from step 6, before rendering |
-| `fig02a_reliable_anatomy_VITCS_mricrogl.py` | Fig. 2a — VITCS reliable-anatomy brain map |
+| `fig02a_1_reliable_anatomy_VITCS_PREPROC.sh`, `fig02a_2_reliable_anatomy_VITCS_mricrogl.py` | Fig. 2a — VITCS reliable-anatomy brain map |
 | `fig02b_test_set_roc_plot.m` | Fig. 2b — Test Set ROC curves (CV / acquisition / reversal) |
 | `fig02c_test_set_barplot.m` | Fig. 2c — Test Set pattern expression, CS+ vs. CS- |
 | `fig04_existing_signatures_accuracy.m` | Fig. 4 — accuracy comparison across signatures |
 | `figsup03_neurosynth_wordcloud.py` | Supp. Fig. 3 — Neurosynth decoding word clouds |
 | `figsup05_VITCS_vs_univariate_mricrogl.py` | Supp. Fig. 5 — VITCS vs. univariate contrast overlay |
-| `figsup06a_..._VITCS_early_mricrogl.py`, `figsup06d_..._VITCS_late_mricrogl.py` | Supp. Fig. 6 — VITCS-early / VITCS-late reliable-anatomy maps |
+| `figsup06a_1_..._VITCS_early_PREPROC.sh`, `figsup06a_2_..._VITCS_early_mricrogl.py`, `figsup06d_1_..._VITCS_early_PREPROC.sh`, `figsup06d_2_..._VITCS_late_mricrogl.py` | Supp. Fig. 6 — VITCS-early / VITCS-late reliable-anatomy maps |
 
 Figure scripts assume the corresponding `sNN_` analysis has already been run and expect `results/` to be populated; brain-rendering scripts (`*_mricrogl.py`) must be run from within MRIcroGL, not as standalone Python scripts.
 
