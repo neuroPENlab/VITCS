@@ -47,4 +47,4 @@ set(gca, 'FontSize', 28);
 x0 = 10; y0 = 10; width = 500; height = 450;
 set(gcf, 'position', [x0, y0, width, height]);
 
-saveas(gcf, fullfile(figdir, 'ROC_test_set_and_CV.png'));
+saveas(gcf, fullfile(figdir, 'fig02b_ROC_test_set_and_CV.png'));

@@ -51,8 +51,8 @@ save(fullfile(output_dir, 'stats_bootstrap.mat'), 'stats_boot');
 
 %% Threshold the bootstrapped weight map 
 boot_fdr05  = threshold(stats_boot.weight_obj, .05,  'fdr', 'mask', maskdir);
-boot_unc001 = threshold(stats_boot.weight_obj, .001, 'unc', 'mask', maskdir);
-boot_unc01  = threshold(stats_boot.weight_obj, .01,  'unc', 'mask', maskdir);
+boot_unc001 = threshold(stats_boot.weight_obj, .001, 'unc', 'k', 3, 'mask', maskdir);
+boot_unc01  = threshold(stats_boot.weight_obj, .01,  'unc', 'k', 5, 'mask', maskdir);
 
 %% Save thresholded maps 
 boot_fdr05.fullpath = fullfile(output_dir, 'VITCS_bootstrap_fdr05.nii');

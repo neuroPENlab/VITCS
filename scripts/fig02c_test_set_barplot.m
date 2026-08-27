@@ -30,7 +30,7 @@ R = load(fullfile(savedir, 'validation_test_set_results.mat'));
 
 %% Plot
 titles = {'Acquisition Test set', 'Reversal Test set'};
-filenames = {'test_set_acquisition_barplot.png', 'test_set_reversal_barplot.png'};
+filenames = {'fig02c_test_set_acquisition_barplot.png', 'fig02c_test_set_reversal_barplot.png'};
 colors = {[.4 .6 1], [1 1 0]};
 
 for C = 1:length(R.contrast_names)
