@@ -1,6 +1,8 @@
 import gl
 from os.path import join
 
+# IMPORTANT: before running this script, run fig_1_process_reliable_anatomy.sh and fig_2_cluster_prunning.sh
+
 basedir = '<PATH_TO_PROJECT>' # <-- EDIT THIS
 outputdir = join(basedir, 'results', 'VITCS_late_results', 'reliable_anatomy')
 figdir = join(basedir, 'figures')
