@@ -212,7 +212,7 @@ All figure scripts below live in `scripts/` alongside the analysis pipeline (see
 | `fig04_existing_signatures_accuracy.m` | Fig. 4 — accuracy comparison across signatures |
 | `figsup03_neurosynth_wordcloud.py` | Supp. Fig. 3 — Neurosynth decoding word clouds |
 | `figsup05_VITCS_vs_univariate_mricrogl.py` | Supp. Fig. 5 — VITCS vs. univariate contrast overlay |
-| `figsup06a_1_reliable_anatomy_VITCS_early_PREPROC.sh`, `figsup06a_2_reliable_anatomy_VITCS_early_mricrogl.py`, `figsup06d_1_reliable_anatomy_VITCS_early_PREPROC.sh`, `figsup06d_2_reliable_anatomy_VITCS_late_mricrogl.py` | Supp. Fig. 6 — VITCS-early / VITCS-late reliable-anatomy maps |
+| `figsup06a_1_reliable_anatomy_VITCS_early_PREPROC.sh`, `figsup06a_2_reliable_anatomy_VITCS_early_mricrogl.py`, `figsup06d_1_reliable_anatomy_VITCS_late_PREPROC.sh`, `figsup06d_2_reliable_anatomy_VITCS_late_mricrogl.py` | Supp. Fig. 6 — VITCS-early / VITCS-late reliable-anatomy maps |
 
 Figure scripts assume the corresponding `sNN_` analysis has already been run and expect `results/` to be populated; brain-rendering scripts (`*_mricrogl.py`) must be run from within MRIcroGL, not as standalone Python scripts.
 
