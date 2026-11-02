@@ -70,15 +70,19 @@ end
 %% Train (C = 1) and save the unthresholded weight map
 [~, stats_CV_10f] = predict(training_data, 'algorithm_name', 'cv_svm', ...
     'nfolds', sample_folds, 'C', 1, 'error_type', 'mcr', 'dist_from_hyperplane_xval');
+sig = stats_CV_10f.weight_obj;
+sig.fullpath = fullfile(output_dir, [model_label '_unthresholded_10foldCV.nii']);
+write(sig);
 
 % Model performance and ROC plot
+xval_dist_C1 = stats_CV_10f.dist_from_hyperplane_xval;
+outcome_C1 = training_data.Y == 1;
 figure(1)
-rp = roc_plot(stats_CV_10f.dist_from_hyperplane_xval, training_data.Y == 1, 'threshold', 'pairedobservations');
+rp = roc_plot(xval_dist_C1, outcome_C1, 'threshold', 'pairedobservations');
 title('ROC plot 10-fold CV (C=1)')
 
-sig = stats_CV_10f.weight_obj;
-sig.fullpath = fullfile(output_dir, 'VITCS_unthresholded_10foldCV.nii');
-write(sig);
+% 95% CI of the AUC (participant-level bootstrap)
+auc_ci = bootstrap_auc_ci(xval_dist_C1(1:n_tr_set), xval_dist_C1(n_tr_set+1:end), 5000, 1);
 
 % Cohen's D
 dif_xval_dist = stats_CV_10f.dist_from_hyperplane_xval(1:n_tr_set ...
@@ -86,19 +90,23 @@ dif_xval_dist = stats_CV_10f.dist_from_hyperplane_xval(1:n_tr_set ...
 d_cv = mean(dif_xval_dist)/std(dif_xval_dist);
 
 fprintf(['10-fold CV (C=1): accuracy: %.4f; sensitivity: %.4f; specificity: %.4f; ' ...
-    'p-value: %.4f; Cohens D: %.4f\n'], rp.accuracy, rp.sensitivity, ...
-    rp.specificity, rp.accuracy_p, d_cv);
+    'p-value: %.4f; AUC: %.4f; Cohens D: %.4f\n'], rp.accuracy, rp.sensitivity, ...
+    rp.specificity, rp.accuracy_p, rp.AUC, d_cv);
+
+res_table = array2table(zeros(1, 13), 'VariableNames', {'accuracy', 'acc_se', 'acc_p', ...
+    'sensitivity', 'sensitivity_ci_I', 'sensitivity_ci_S', 'specificity', ...
+    'specificity_ci_I', 'specificity_ci_S', 'AUC', 'AUC_ci_I', 'AUC_ci_S', 'cohens_d'});
+res_table{1, :} = [rp.accuracy, rp.accuracy_se, rp.accuracy_p, rp.sensitivity, ...
+    rp.sensitivity_ci, rp.specificity, rp.specificity_ci, rp.AUC, auc_ci, d_cv];
+res_table.Properties.RowNames = {'Training set (10-fold CV)'};
+writetable(res_table, fullfile(output_dir, [model_label '_CV_performance.csv']), 'WriteRowNames', true);
 
 % Save cross-validated distance-from-hyperplane values for the ROC figure
-xval_dist_C1 = stats_CV_10f.dist_from_hyperplane_xval;
-outcome_C1 = training_data.Y == 1;
-save(fullfile(output_dir, 'VITCS_roc_inputs.mat'), 'xval_dist_C1', 'outcome_C1');
+save(fullfile(output_dir, [model_label '_roc_inputs.mat']), 'xval_dist_C1', 'outcome_C1');
 
-% Per-fold weight objects (one trained model per left-out fold), needed
-% to compute out-of-fold pattern expression for TRAINING subjects.
-% (04b_full_sample_xval_pattern_expression.m)
+% Per-fold weight objects (one trained model per left-out fold)
 other_output_cv = stats_CV_10f.other_output_cv;
-save(fullfile(output_dir, 'VITCS_CV_10fold_weights.mat'), 'other_output_cv', 'sample_folds');
+save(fullfile(output_dir, [model_label '_CV_10fold_weights.mat']), 'other_output_cv', 'sample_folds');
 
 %% Optional: Regularization sensitivity analysis (Supplementary Table 2)
 if run_sensitivity_analysis
@@ -106,9 +114,8 @@ if run_sensitivity_analysis
     n_C = numel(C_values);
  
     classifier_label = strings(n_C, 1);
-    accuracy = nan(n_C, 1);
-    accuracy_se = nan(n_C, 1);
-    cosine_sim_to_C1 = nan(n_C, 1);
+    [accuracy, accuracy_se, auc, cosine_sim_to_C1] = deal(nan(n_C, 1));
+    auc_ci = nan(n_C, 2);
  
     for i = 1:n_C
         C_val = C_values(i);
@@ -129,12 +136,14 @@ if run_sensitivity_analysis
             'threshold', 'pairedobservations');
         accuracy(i) = rp.accuracy;
         accuracy_se(i) = rp.accuracy_se;
- 
+        auc(i) = rp.AUC;
+        auc_ci(i,:) = bootstrap_auc_ci(stats_this_C.dist_from_hyperplane_xval(1:n_tr_set), ...
+            stats_this_C.dist_from_hyperplane_xval(n_tr_set+1:end), 5000, 1);
         cosine_sim_to_C1(i) = canlab_pattern_similarity(sig.dat, sig_this_C.dat, 'cosine_similarity');
     end
  
-    sensitivity_table = table(classifier_label, accuracy, accuracy_se, cosine_sim_to_C1, ...
-        'VariableNames', {'classifier', 'accuracy', 'accuracy_se', 'cosine_similarity_to_C1'});
+    sensitivity_table = table(classifier_label, accuracy, accuracy_se, auc, auc_ci(:,1), auc_ci(:,2), cosine_sim_to_C1, ...
+        'VariableNames', {'classifier', 'accuracy', 'accuracy_se', 'AUC', 'AUC_ci_I', 'AUC_ci_S', 'cosine_similarity_to_C1'});
  
     writetable(sensitivity_table, fullfile(output_dir, 'supplementary_table2_C_sensitivity.csv'));
     save(fullfile(output_dir, 'supplementary_table2_C_sensitivity.mat'), 'sensitivity_table');
