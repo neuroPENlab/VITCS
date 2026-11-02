@@ -40,9 +40,10 @@ VITCS_sig = fmri_data(fullfile(sigdir, 'VITCS_unthresholded_10foldCV.nii'), mask
 
 %% Results table (both datasets x both metrics)
 row_names = {'CueGainVSCueLoss_dotproduct', 'CueGainVSCueLoss_cosine', ...
+            'GainVSFixation_dotproduct', 'GainVSFixation_cosine', ...
              'RewardVSpunishment_dotproduct', 'RewardVSpunishment_cosine'};
-res_specificity = array2table(nan(4, 5), ...
-    'VariableNames', {'accuracy', 'sensitivity', 'specificity', 'p-value', 'cohens_d'});
+res_specificity = array2table(nan(length(row_names), 8), 'VariableNames', {'accuracy', ...
+    'sensitivity', 'specificity', 'AUC', 'AUC_ci_I', 'AUC_ci_S', 'p-value', 'cohens_d'});
 res_specificity.Properties.RowNames = row_names;
 
 %% -----------------------------------------------------------------------------
@@ -55,33 +56,48 @@ contrast_subpath_mid = '<SUBPATH_TO_MID_STATS_FOLDER>'; % <-- EDIT THIS, e.g. fu
 
 cuegain_file = '<name_CueGain_contrast_file>'; % <-- EDIT THIS, e.g. 'con_0005'
 cueloss_file = '<name_CueLoss_contrast_file>'; % <-- EDIT THIS, e.g. 'con_0006'
+gain_file = '<name_gain_contrast_file>'; % <-- EDIT THIS, e.g. 'con_0003'
+fixation_file = '<name_fixation_contrast_file>'; % <-- EDIT THIS, e.g. 'con_0007'
 
 cuegain_paths = fullfile(contrastdir_mid, list_subj_mid, contrast_subpath_mid, [cuegain_file '.nii']);
 cueloss_paths = fullfile(contrastdir_mid, list_subj_mid, contrast_subpath_mid, [cueloss_file '.nii']);
+gain_paths = fullfile(contrastdir_mid, list_subj_mid, contrast_subpath_mid, [gain_file '.nii']);
+fixation_paths = fullfile(contrastdir_mid, list_subj_mid, contrast_subpath_mid, [fixation_file '.nii']);
 
 % Load contrast data
 data_cuegain = fmri_data(cuegain_paths, maskdir);
 data_cueloss = fmri_data(cueloss_paths, maskdir);
+data_gain = fmri_data(gain_paths, maskdir);
+data_fixation = fmri_data(fixation_paths, maskdir);
 
 % Resample signature to contrast data space
 VITCS_resampled_mid = resample_space(VITCS_sig, data_cuegain);
 
 % Calculate pattern expression
-for m = 1:length(metrics)
-    metric = metrics{m};
-    row = row_names{m};   % rows 1-2: dot product, cosine similarity
-
-    pat_exp_cuegain = canlab_pattern_similarity(data_cuegain.dat, VITCS_resampled_mid.dat, metric);
-    pat_exp_cueloss = canlab_pattern_similarity(data_cueloss.dat, VITCS_resampled_mid.dat, metric);
-
-    rp = roc_plot([pat_exp_cuegain; pat_exp_cueloss], ...
-        [ones(length(pat_exp_cuegain), 1); zeros(length(pat_exp_cueloss), 1)], ...
-        'threshold', 'pairedobservations');
-
-    dif_mid = pat_exp_cuegain - pat_exp_cueloss;
-    d = mean(dif_mid) / std(dif_mid); % Cohen's D
-
-    res_specificity{row, :} = [rp.accuracy, rp.sensitivity, rp.specificity, rp.accuracy_p, d];
+comparisons = {data_cuegain, data_cueloss; data_gain, data_fixation};
+k = 1;
+for c = 1:length(comparisons)
+    c1 = comparisons{c,1};
+    c2 = comparisons{c,2};
+    for m = 1:length(metrics)
+        metric = metrics{m};
+        row = row_names{k};   % rows 1-2: dot product, cosine similarity
+    
+        pat_exp_c1 = canlab_pattern_similarity(c1.dat, VITCS_resampled_mid.dat, metric);
+        pat_exp_c2 = canlab_pattern_similarity(c2.dat, VITCS_resampled_mid.dat, metric);
+    
+        rp = roc_plot([pat_exp_c1; pat_exp_c2], ...
+            [ones(length(pat_exp_c1), 1); zeros(length(pat_exp_c2), 1)], ...
+            'threshold', 'pairedobservations');
+        auc_ci = bootstrap_auc_ci(pat_exp_c1, pat_exp_c2, 5000, 1);
+    
+        dif_mid = pat_exp_c1 - pat_exp_c2;
+        d = mean(dif_mid) / std(dif_mid); % Cohen's D
+    
+        res_specificity{row, :} = [rp.accuracy, rp.sensitivity, rp.specificity, rp.AUC, auc_ci, ...
+            rp.accuracy_p, d];
+        k=k+1;
+    end
 end
 
 %% -----------------------------------------------------------------------------
@@ -99,22 +115,22 @@ reward_v_punish_cos = VITCS_scores.condition_scores_cosine{2}; % same, cosine si
 hcp_data = {reward_v_punish, reward_v_punish_cos};
 
 for m = 1:length(metrics)
-    row = row_names{2 + m};   % rows 3-4: dot product, cosine similarity
+    row = row_names{k};   % rows 3-4: dot product, cosine similarity
     scores = hcp_data{m};
 
     rp = roc_plot([scores(:, 1); scores(:, 2)], ...
         [ones(size(scores, 1), 1); zeros(size(scores, 1), 1)], ...
         'threshold', 'pairedobservations');
+    auc_ci = bootstrap_auc_ci(scores(:, 1), scores(:, 2), 5000, 1);
 
     dif_hcp = scores(:, 1) - scores(:, 2);
     d = mean(dif_hcp) / std(dif_hcp); % Cohen's D
 
-    res_specificity{row, :} = [rp.accuracy, rp.sensitivity, rp.specificity, rp.accuracy_p, d];
+    res_specificity{row, :} = [rp.accuracy, rp.sensitivity, rp.specificity, rp.AUC, auc_ci, ...
+        rp.accuracy_p, d];
+    k = k+1;
 end
 
 %% Save results
 writetable(res_specificity, fullfile(savedir, 'specificity_results.csv'), 'WriteRowNames', true);
 disp(res_specificity);
-
-save(fullfile(savedir, 'specificity_results.mat'), ...
-    'res_specificity', 'pat_exp_cuegain', 'pat_exp_cueloss', 'reward_v_punish', 'reward_v_punish_cos');
