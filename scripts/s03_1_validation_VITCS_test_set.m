@@ -24,13 +24,14 @@ contrast_subpath = fullfile('REVERSAL', 'FIRST_LEVEL_REVERSAL_Half_ALL'); % <-- 
 sigdir  = fullfile(basedir, 'results', 'VITCS_development');   % where 02_train_VITCS_signature.m wrote its outputs
 savedir = fullfile(basedir, 'results', 'VITCS_validation');   % <-- if necessary, EDIT THIS
 
-contrast_files = {{'<name_CS+_file>'; '<name_CS-_file>'}, ...
-    {'<name_newCS+_file>'; '<name_newCS-_file>'}};     % <-- EDIT THIS
-contrast_names = {{'CS+', 'CS-'}, {'newCS+', 'newCS-'}};
-% 'CS+'/'CS-'       -> acquisition (Conditioning) contrasts
-% 'newCS+'/'newCS-' -> reversal contrasts
+%% Evaluate VITCS model on the Test Set (acquisition)
+contrast_files = {'<name_CS+_file>'; '<name_CS-_file>'};     % <-- EDIT THIS
+contrast_names = {'CS+', 'CS-'};
+results_acq  = run_test_set_validation(basedir, contrastdir, contrast_subpath, contrast_files, contrast_names, ...
+    fullfile(sigdir, 'VITCS_unthresholded_10foldCV.nii'), savedir, 'VITCS_acq', true, 10000);
 
-%% Evaluate VITCS model on the Test Set
-results  = run_test_set_validation(basedir, contrastdir, contrast_subpath, contrast_files, ...
-    contrast_names, fullfile(sigdir, 'VITCS_unthresholded_10foldCV.nii'), ...
-    fullfile(sigdir, 'VITCS_roc_inputs.mat'), savedir, 'VITCS');
+%% Evaluate VITCS model on the Test Set (reversal)
+contrast_files = {'<name_newCS+_file>'; '<name_newCS-_file>'};     % <-- EDIT THIS
+contrast_names = {'newCS+', 'newCS-'};
+results_rev  = run_test_set_validation(basedir, contrastdir, contrast_subpath, contrast_files, contrast_names, ...
+    fullfile(sigdir, 'VITCS_unthresholded_10foldCV.nii'), savedir, 'VITCS_rev', true, 10000);
